@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor IA de Plantillas Web · DMD | paginas web</title>
+  <link rel="icon" type="image/png" href="assets/logo-dmd.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="https://www.dmdmx.dev/style.css">
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      height: 100vh;
+      background-color: #f7f4ed;
+      color: #1c1c1c;
+    }
+    .editor-container {
+      display: flex;
+      height: calc(100vh - 60px);
+      width: 100%;
+      overflow: hidden;
+    }
+    .device-stage {
+      transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .ai-chat-bubble-bot {
+      background: #ffffff;
+      border: 1px solid #e7e4dc;
+      color: #1c1c1c;
+      border-radius: 16px 16px 16px 4px;
+    }
+    .ai-chat-bubble-user {
+      background: #1c1c1c;
+      color: #ffffff;
+      border-radius: 16px 16px 4px 16px;
+    }
+    .lock-overlay {
+      background: rgba(247, 244, 237, 0.85);
+      backdrop-filter: blur(4px);
+    }
+  </style>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="apple-touch-icon-precomposed" href="apple-touch-icon.png">
+    <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DMD | Digital Mijma Dreams">
+  <meta property="og:title" content="Editor IA de Plantillas Web · DMD | paginas web">
+  <meta property="og:description" content="Edita tu plantilla web con IA: cambia textos, colores y secciones en segundos.">
+  <meta property="og:image" content="https://www.dmdmx.dev/assets/social/og-dmd.jpg">
+  <meta property="og:image:secure_url" content="https://www.dmdmx.dev/assets/social/og-dmd.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Editor IA de Plantillas Web · DMD | paginas web · DMD Digital Mijma Dreams">
+  <meta property="og:url" content="https://dmd-paginas-web-ia.vercel.app/editor-ia.html">
+  <meta property="og:locale" content="es_MX">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Editor IA de Plantillas Web · DMD | paginas web">
+  <meta name="twitter:description" content="Edita tu plantilla web con IA: cambia textos, colores y secciones en segundos.">
+  <meta name="twitter:image" content="https://www.dmdmx.dev/assets/social/og-dmd.jpg">
+  <meta name="twitter:image:alt" content="Editor IA de Plantillas Web · DMD | paginas web · DMD Digital Mijma Dreams">
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+
+  <!-- Twitter / X Card Meta Tags -->
+  
+  
+  
+  
+</head>
+<body class="flex flex-col h-screen select-none">
+
+  <!-- BARRA SUPERIOR DE HERRAMIENTAS Y ESTADO DE SUSCRIPCIÓN -->
+  <header class="h-[60px] bg-[#fcfbf8] border-b border-[#e7e4dc] px-4 sm:px-6 flex items-center justify-between z-20 flex-shrink-0">
+    <div class="flex items-center space-x-3 sm:space-x-4">
+      <a href="app.html" class="px-3 py-1.5 rounded-xl bg-white hover:bg-[#f1eee6] text-[#1c1c1c] hover:text-[#1c1c1c] text-xs font-bold transition flex items-center space-x-1.5 border border-[#e7e4dc]">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+        <span class="hidden sm:inline">Volver al Builder</span>
+      </a>
+
+      <div class="flex items-center space-x-2 border-l border-[#e7e4dc] pl-3">
+        <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-[#ff8a4c] via-[#f0467f] to-[#4f7dff] flex items-center justify-center font-black text-white text-xs">
+          IA
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-xs sm:text-sm font-black text-[#1c1c1c] tracking-wide truncate max-w-[180px] sm:max-w-xs" id="template-title">
+              Cargando Plantilla Web...
+            </h1>
+            <span id="tier-badge" class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-white text-[#5f5f5d] border border-[#e7e4dc]">
+              Detectando...
+            </span>
+          </div>
+          <p class="text-[10px] text-[#5f5f5d] hidden md:block">Editor Inteligente con Asistente IA DMD</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SELECTOR DE VISTA DE DISPOSITIVO (DESKTOP, TABLET, MOBILE) -->
+    <div class="hidden lg:flex items-center bg-white p-1 rounded-xl border border-[#e7e4dc] space-x-1">
+      <button onclick="setPreviewDevice('desktop')" id="dev-desktop" class="px-3 py-1 rounded-lg text-xs font-bold bg-[#1c1c1c] text-white transition flex items-center space-x-1 shadow-xs">
+        <i data-lucide="monitor" class="w-3.5 h-3.5"></i>
+        <span>Escritorio</span>
+      </button>
+      <button onclick="setPreviewDevice('tablet')" id="dev-tablet" class="px-3 py-1 rounded-lg text-xs font-bold text-[#5f5f5d] hover:text-[#1c1c1c] transition flex items-center space-x-1">
+        <i data-lucide="tablet" class="w-3.5 h-3.5"></i>
+        <span>Tablet</span>
+      </button>
+      <button onclick="setPreviewDevice('mobile')" id="dev-mobile" class="px-3 py-1 rounded-lg text-xs font-bold text-[#5f5f5d] hover:text-[#1c1c1c] transition flex items-center space-x-1">
+        <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
+        <span>Móvil</span>
+      </button>
+    </div>
+
+    <!-- ACCIONES: EXPORTAR, SUSCRIPCIÓN Y DESCARGA -->
+    <div class="flex items-center space-x-2">
+      <!-- Indicador de Membresía del Usuario -->
+      <button onclick="openPremiumModal()" id="user-tier-indicator" class="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition">
+        <!-- Renderizado por JS -->
+      </button>
+
+      <button onclick="copyGeneratedCode()" class="px-3 py-1.5 rounded-xl bg-white hover:bg-[#f1eee6] text-[#1c1c1c] hover:text-[#1c1c1c] text-xs font-bold transition flex items-center space-x-1.5 border border-[#e7e4dc]" title="Copiar código HTML">
+        <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+        <span class="hidden md:inline">Copiar Código</span>
+      </button>
+
+      <button onclick="publishCurrentWebpage()" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#ff8a4c] via-[#f0467f] to-[#4f7dff] text-white text-xs font-black transition flex items-center space-x-1.5 shadow-md shadow-[#f0467f]/25 active:scale-95" title="Publicar con GitHub Pages (Prueba de 7 Días / Mensual)">
+        <i data-lucide="globe" class="w-3.5 h-3.5"></i>
+        <span>Publicar en la Web</span>
+      </button>
+
+      <button onclick="downloadGeneratedHTML()" class="px-3 py-1.5 rounded-xl bg-[#1c1c1c] hover:bg-black text-white text-xs font-black transition flex items-center space-x-1.5 shadow-md shadow-black/10 active:scale-95">
+        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+        <span>Descargar Web</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- BANNER DE AVISO DE PLANTILLA PREMIUM (SI ES FREE) -->
+  <div id="premium-lock-banner" class="hidden bg-gradient-to-r from-amber-100 via-[#fcfbf8] to-amber-100 border-b border-amber-500/40 px-4 py-2 text-xs flex items-center justify-between text-amber-800">
+    <div class="flex items-center space-x-2">
+      <span class="text-base">🔒</span>
+      <span class="font-bold">Plantilla de Nivel Premium:</span>
+      <span class="hidden sm:inline">Puedes explorarla libremente. Para pedirle cambios a la IA, activa tu membresía de $79 MXN/mes.</span>
+    </div>
+    <button onclick="openPremiumModal()" class="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-lg text-xs transition whitespace-nowrap active:scale-95">
+      👑 Desbloquear por $79/mes
+    </button>
+  </div>
+
+  <!-- ÁREA DE TRABAJO PRINCIPAL: ASISTENTE IA (IZQUIERDA) + VISTA PREVIA (DERECHA) -->
+  <div class="editor-container">
+    
+    <!-- PANEL ASISTENTE DE IA (COPILOT INTERACTIVO) -->
+    <aside class="w-full sm:w-[380px] lg:w-[420px] bg-[#fcfbf8] border-r border-[#e7e4dc] flex flex-col h-full flex-shrink-0 z-10">
+      
+      <!-- Cabecera del Chat con IA -->
+      <div class="p-4 border-b border-[#e7e4dc] flex items-center justify-between bg-[#fcfbf8]/90">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-[#ff8a4c] via-[#f0467f] to-[#4f7dff] flex items-center justify-center text-white text-sm shadow-md shadow-black/10">
+            🤖
+          </div>
+          <div>
+            <h2 class="text-sm font-extrabold text-[#1c1c1c] leading-tight">Copilot IA Web DMD</h2>
+            <div class="flex items-center space-x-1.5 text-[10px] text-emerald-600">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Listo para recibir instrucciones</span>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="resetTemplateOriginal()" class="text-[11px] text-[#5f5f5d] hover:text-[#1c1c1c] font-bold px-2 py-1 bg-white rounded-lg hover:bg-[#f1eee6] transition" title="Restaurar diseño original de la plantilla">
+          Restaurar
+        </button>
+      </div>
+
+      <!-- Historial de Conversación con la IA -->
+      <div id="ai-chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3 font-sans text-xs">
+        
+        <!-- Mensaje de bienvenida inicial -->
+        <div class="ai-chat-bubble-bot p-3.5 space-y-1.5 leading-relaxed">
+          <div class="font-black text-[#f0467f] text-[11px] flex items-center space-x-1">
+            <span>✨ Asistente de Diseño Web:</span>
+          </div>
+          <p>
+            ¡Hola! Tengo abierta tu plantilla web. Puedes pedirme en lenguaje natural qué quieres cambiar de este diseño.
+          </p>
+          <p class="text-[#5f5f5d] text-[11px]">
+            Por ejemplo: <em>"Cambia el color principal a verde esmeralda", "Cambia el nombre a Taquería El Paisa", "Pon mi WhatsApp +52 762 106 8212", "Cambia a modo oscuro", o "Agrega un 20% de descuento en el banner"</em>.
+          </p>
+          <p class="text-[#5f5f5d] text-[11px]">
+            Aquí el Copilot aplica los cambios al instante con su motor local (color, nombre, WhatsApp y modo oscuro). La IA con Groq vive en el builder, en local.
+          </p>
+        </div>
+      </div>
+
+      <!-- Chips de Sugerencias Rápidas -->
+      <div class="p-2 border-t border-[#e7e4dc]/80 bg-[#fcfbf8]/80 overflow-x-auto flex space-x-1.5 scrollbar-none">
+        <button onclick="setSuggestionPrompt('Cambia el color principal de la página a un verde esmeralda elegante')" class="px-2.5 py-1 rounded-full bg-white hover:bg-[#f1eee6] text-[#1c1c1c] text-[11px] whitespace-nowrap border border-[#e7e4dc] font-bold transition">
+          🎨 Cambiar Color
+        </button>
+        <button onclick="setSuggestionPrompt('Cambia el nombre del negocio por Mi Tienda Favorita')" class="px-2.5 py-1 rounded-full bg-white hover:bg-[#f1eee6] text-[#1c1c1c] text-[11px] whitespace-nowrap border border-[#e7e4dc] font-bold transition">
+          📝 Cambiar Nombre
+        </button>
+        <button onclick="setSuggestionPrompt('Actualiza el botón de WhatsApp con el número +52 762 106 8212')" class="px-2.5 py-1 rounded-full bg-white hover:bg-[#f1eee6] text-[#1c1c1c] text-[11px] whitespace-nowrap border border-[#e7e4dc] font-bold transition">
+          💬 Poner mi WhatsApp
+        </button>
+        <button onclick="setSuggestionPrompt('Alterna entre modo oscuro y modo claro moderno')" class="px-2.5 py-1 rounded-full bg-white hover:bg-[#f1eee6] text-[#1c1c1c] text-[11px] whitespace-nowrap border border-[#e7e4dc] font-bold transition">
+          🌙 Modo Oscuro / Claro
+        </button>
+      </div>
+
+      <!-- Formulario de Entrada de Instrucciones a la IA -->
+      <div class="p-3 sm:p-4 border-t border-[#e7e4dc] bg-[#fcfbf8]">
+        <form id="ai-prompt-form" onsubmit="handleAISubmit(event)" class="space-y-2">
+          <div class="relative">
+            <textarea id="ai-user-prompt" rows="3" required
+              placeholder="Escribe a la IA qué quieres cambiar de esta página..."
+              class="w-full bg-white border-2 border-[#e7e4dc] focus:border-[#1c1c1c] rounded-2xl p-3 text-xs sm:text-sm text-white placeholder-[#8a8a86] focus:outline-none transition resize-none"></textarea>
+          </div>
+
+          <button type="submit" id="btn-submit-ai"
+            class="w-full py-3 bg-[#1c1c1c] hover:bg-black active:scale-98 text-white font-extrabold text-xs sm:text-sm rounded-xl transition shadow-lg shadow-black/10 flex items-center justify-center space-x-2">
+            <i data-lucide="sparkles" class="w-4 h-4"></i>
+            <span>Pedir a la IA que lo cambie</span>
+          </button>
+        </form>
+      </div>
+    </aside>
+
+    <!-- LIENZO DE VISTA PREVIA INTERACTIVO (DERECHA) -->
+    <main class="flex-1 bg-[#f1eee6] flex flex-col items-center justify-center p-2 sm:p-4 overflow-hidden relative">
+      
+      <!-- Contenedor del Iframe con Dimensiones Responsivas -->
+      <div id="device-container" class="device-stage w-full h-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-[#e7e4dc] relative flex flex-col">
+        
+        <!-- Indicador de Carga de la IA -->
+        <div id="ai-loading-overlay" class="absolute inset-0 z-30 bg-[#f7f4ed]/85 backdrop-blur-sm hidden flex-col items-center justify-center text-center p-6 animate-in fade-in">
+          <div class="w-12 h-12 border-4 border-[#1c1c1c] border-t-transparent rounded-full animate-spin mb-4"></div>
+          <h3 class="text-base font-extrabold text-[#1c1c1c]">La Inteligencia Artificial está modificando tu página...</h3>
+          <p class="text-xs text-[#5f5f5d] mt-1" id="ai-loading-status">Reescribiendo componentes y estilos...</p>
+        </div>
+
+        <iframe id="template-frame" title="Lienzo de Plantilla Web" 
+          class="w-full h-full border-0 bg-white" 
+          sandbox="allow-scripts allow-forms allow-modals allow-popups allow-same-origin"></iframe>
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL DE SUSCRIPCIÓN PREMIUM CUANDO INTENTAN EDITAR PLANTILLA PRO SIN PAGAR -->
+  <div id="modal-premium-paywall" class="fixed inset-0 z-50 bg-[rgba(28,28,28,.45)] backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 text-center text-slate-900 shadow-2xl border-2 border-amber-500 space-y-4 animate-in fade-in zoom-in-95">
+      <div class="w-16 h-16 rounded-2xl bg-amber-50 border-2 border-amber-500 text-3xl flex items-center justify-center mx-auto shadow-sm">
+        🔒
+      </div>
+      <div>
+        <span class="text-[10px] font-black uppercase tracking-wider px-3 py-1 bg-amber-100 text-amber-900 border border-amber-300 rounded-full">
+          Plantilla Exclusiva Premium
+        </span>
+        <h3 class="text-xl font-black text-slate-900 mt-3">Personalización con IA Bloqueada</h3>
+        <p class="text-xs text-slate-600 mt-2 leading-relaxed">
+          Esta plantilla pertenece a la colección <strong>Premium</strong>. Para que la Inteligencia Artificial aplique cambios personalizados de textos, colores, productos o catálogo, necesitas activar tu <strong>Membresía Premium DMD</strong> por solo <strong>$79 pesos al mes</strong>.
+        </p>
+      </div>
+
+      <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-left text-xs space-y-2">
+        <div class="flex items-center space-x-2 text-slate-700">
+          <span class="text-emerald-600 font-bold">✔</span>
+          <span>Edición ilimitada con Asistente IA en 400 plantillas</span>
+        </div>
+        <div class="flex items-center space-x-2 text-slate-700">
+          <span class="text-emerald-600 font-bold">✔</span>
+          <span>Descarga de código HTML limpio listo para publicar</span>
+        </div>
+        <div class="flex items-center space-x-2 text-slate-700">
+          <span class="text-emerald-600 font-bold">✔</span>
+          <span>Acceso a Puntos de Venta (POS) y Banners publicitarios</span>
+        </div>
+      </div>
+
+      <div class="space-y-2 pt-1">
+        <button onclick="activatePremiumSimulated()" class="w-full py-3.5 bg-[#1c1c1c] hover:bg-black text-white font-extrabold text-sm rounded-xl shadow-lg shadow-black/10 transition active:scale-95">
+          👑 Activar Membresía Premium ($79 MXN/mes)
+        </button>
+        <button onclick="closePaywallModal()" class="w-full py-2 text-xs font-bold text-slate-500 hover:text-slate-800 transition">
+          Continuar explorando en modo lectura
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let activeTemplateData = null;
+    let currentHTML = "";
+    let originalHTML = "";
+    let isPremiumTemplate = false;
+
+    // Detectar estado de suscripción del usuario
+    function isUserSubscribed() {
+      const tier1 = localStorage.getItem("dmd_user_tier");
+      const tier2 = localStorage.getItem("pos_license_tier");
+      const tier3 = localStorage.getItem("dmd_is_premium");
+      return tier1 === "PREMIUM" || tier2 === "PREMIUM" || tier3 === "true";
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loadTemplateFromStorage();
+      updateUserTierBadge();
+      lucide.createIcons();
+    });
+
+    function updateUserTierBadge() {
+      const subscribed = isUserSubscribed();
+      const btnIndicator = document.getElementById("user-tier-indicator");
+      
+      if (subscribed) {
+        btnIndicator.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-amber-500 bg-amber-100 text-amber-800 text-xs font-black shadow-xs";
+        btnIndicator.innerHTML = `<span>👑</span><span>Suscripción Premium Activa</span>`;
+      } else {
+        btnIndicator.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-[#1c1c1c] bg-white text-[#1c1c1c] hover:bg-black/20 text-xs font-bold transition shadow-xs";
+        btnIndicator.innerHTML = `<span>⚡</span><span>Plan Gratuito</span><span class="text-[10px] bg-[#1c1c1c] text-white px-1.5 py-0.2 rounded font-extrabold ml-1">$79/mes</span>`;
+      }
+    }
+
+    function loadTemplateFromStorage() {
+      let raw = localStorage.getItem("dmd_editor_template");
+      if (!raw) {
+        // Plantilla por defecto de demostración
+        activeTemplateData = {
+          brand: "Café Aurora",
+          label: "Cafetería de Especialidad",
+          accent: "#d97706",
+          dark: false,
+          isPremium: false,
+          prompt: "Cafetería moderna con menú de café, granos y pedidos WhatsApp",
+          html: buildFallbackTemplateHTML("Café Aurora", "#d97706", false)
+        };
+      } else {
+        try {
+          activeTemplateData = JSON.parse(raw);
+        } catch (e) {
+          activeTemplateData = {
+            brand: "Café Aurora",
+            label: "Cafetería de Especialidad",
+            accent: "#d97706",
+            dark: false,
+            isPremium: false,
+            html: buildFallbackTemplateHTML("Café Aurora", "#d97706", false)
+          };
+        }
+      }
+
+      isPremiumTemplate = !!activeTemplateData.isPremium;
+      currentHTML = activeTemplateData.html || buildFallbackTemplateHTML(activeTemplateData.brand, activeTemplateData.accent, activeTemplateData.dark);
+      originalHTML = currentHTML;
+
+      // Actualizar Título y Badge
+      document.getElementById("template-title").innerText = `${activeTemplateData.brand || 'Plantilla Web'} (${activeTemplateData.label || 'Diseño'})`;
+      const tierBadge = document.getElementById("tier-badge");
+      const lockBanner = document.getElementById("premium-lock-banner");
+
+      if (isPremiumTemplate) {
+        tierBadge.className = "text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300";
+        tierBadge.innerHTML = "🔒 Premium PRO";
+
+        if (!isUserSubscribed()) {
+          lockBanner.classList.remove("hidden");
+          addChatMessage("bot", `🔒 <strong>Aviso de Licencia:</strong> Esta plantilla es de categoría <strong>Premium</strong>. Puedes visualizarla en vivo, pero para que la Inteligencia Artificial aplique cambios personalizados necesitas activar tu <strong>Membresía Premium ($79 MXN/mes)</strong>.`);
+        }
+      } else {
+        tierBadge.className = "text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-300";
+        tierBadge.innerHTML = "★ Gratuita";
+        lockBanner.classList.add("hidden");
+      }
+
+      renderIframe(currentHTML);
+    }
+
+    function renderIframe(htmlCode) {
+      const frame = document.getElementById("template-frame");
+      frame.srcdoc = htmlCode;
+    }
+
+    // ==================== DISPOSITIVOS RESPONSIVOS ====================
+    function setPreviewDevice(device) {
+      const stage = document.getElementById("device-container");
+      const bDesktop = document.getElementById("dev-desktop");
+      const bTablet = document.getElementById("dev-tablet");
+      const bMobile = document.getElementById("dev-mobile");
+
+      [bDesktop, bTablet, bMobile].forEach(b => {
+        b.className = "px-3 py-1 rounded-lg text-xs font-bold text-[#5f5f5d] hover:text-[#1c1c1c] transition flex items-center space-x-1";
+      });
+
+      if (device === 'desktop') {
+        stage.style.width = "100%";
+        bDesktop.className = "px-3 py-1 rounded-lg text-xs font-bold bg-[#1c1c1c] text-white transition flex items-center space-x-1 shadow-xs";
+      } else if (device === 'tablet') {
+        stage.style.width = "768px";
+        bTablet.className = "px-3 py-1 rounded-lg text-xs font-bold bg-[#1c1c1c] text-white transition flex items-center space-x-1 shadow-xs";
+      } else if (device === 'mobile') {
+        stage.style.width = "390px";
+        bMobile.className = "px-3 py-1 rounded-lg text-xs font-bold bg-[#1c1c1c] text-white transition flex items-center space-x-1 shadow-xs";
+      }
+    }
+
+    // ==================== CHAT DE IA Y VALIDACIÓN DE PAGO ====================
+    function setSuggestionPrompt(text) {
+      const input = document.getElementById("ai-user-prompt");
+      input.value = text;
+      input.focus();
+    }
+
+    function handleAISubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById("ai-user-prompt");
+      const prompt = input.value.trim();
+      if (!prompt) return;
+
+      addChatMessage("user", prompt);
+      input.value = "";
+
+      // 🔒 VERIFICACIÓN DE PAYWALL:
+      // Si la plantilla es Premium y el usuario NO tiene membresía pagada:
+      if (isPremiumTemplate && !isUserSubscribed()) {
+        setTimeout(() => {
+          addChatMessage("bot", `🔒 <strong>Modificación Rechazada (Suscripción Requerida):</strong><br>Esta plantilla es <strong>Premium</strong>. Para que la Inteligencia Artificial modifique el código, diseño y textos de esta plantilla, debes suscribirte a la <strong>Membresía Premium DMD ($79 MXN/mes)</strong>.`);
+          openPaywallModal();
+        }, 500);
+        return;
+      }
+
+      // Si es gratuita o el usuario es Premium, la IA aplica los cambios
+      processAIChange(prompt);
+    }
+
+    // Reintenta el último cambio con la IA (Groq) tras un fallback local.
+    window.DMDRetryEditorAI = function () {
+      if (window.__dmdEditorLastInstruction) processAIChange(window.__dmdEditorLastInstruction);
+    };
+
+    async function processAIChange(instruction) {
+      window.__dmdEditorLastInstruction = instruction;
+      // true hasta que la IA confirme el cambio: si algo falla, el
+      // motor local avisa y ofrece reintentar con IA (P1-2).
+      let aiFailed = true;
+      const loading = document.getElementById("ai-loading-overlay");
+      const loadingText = document.getElementById("ai-loading-status");
+      loading.classList.remove("hidden");
+      loading.classList.add("flex");
+      loadingText.innerText = `Analizando tu solicitud con Inteligencia Artificial: "${instruction}"...`;
+
+      // 1. Intentar consultar la API de Groq en producción
+      if (window.location.protocol.startsWith("http")) {
+        try {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 45000);
+          const response = await fetch("/api/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              prompt: `Modifica el código HTML de este sitio web según la instrucción del usuario: "${instruction}". Código actual:\n\n${currentHTML.slice(0, 12000)}`,
+              color: activeTemplateData ? activeTemplateData.accent : "#2563eb",
+              style: activeTemplateData && activeTemplateData.dark ? "oscuro" : "claro"
+            }),
+            signal: controller.signal
+          });
+          clearTimeout(timer);
+          if (response.ok) {
+            const resData = await response.json();
+            if (resData && resData.html && resData.html.includes("<body")) {
+              currentHTML = resData.html;
+              renderIframe(currentHTML);
+              loading.classList.add("hidden");
+              loading.classList.remove("flex");
+              aiFailed = false;
+              addChatMessage("bot", `✨ <strong>¡Cambio aplicado con IA Groq!</strong><br>He procesado tu instrucción: <em>"${instruction}"</em>.<br>Revisa los cambios en la vista previa.`);
+              return;
+            }
+          }
+        } catch(err) {
+          console.log("Fallback a motor semántico local:", err);
+        }
+      }
+      loading.classList.remove("hidden");
+      loading.classList.add("flex");
+      loadingText.innerText = `Analizando tu solicitud: "${instruction}"...`;
+
+      setTimeout(() => {
+        // Motor inteligente de reemplazo de contenido en el HTML de la plantilla
+        let modified = currentHTML;
+        const lower = instruction.toLowerCase();
+
+        // 1. Detección de cambio de color
+        const colorMatches = {
+          "rojo": "#dc2626",
+          "verde": "#059669",
+          "esmeralda": "#10b981",
+          "azul": "#2563eb",
+          "dorado": "#d97706",
+          "oro": "#eab308",
+          "morado": "#9333ea",
+          "púrpura": "#7c3aed",
+          "rosa": "#ec4899",
+          "negro": "#0f172a",
+          "naranja": "#ea580c",
+          "cyan": "#06b6d4"
+        };
+
+        for (const [name, hex] of Object.entries(colorMatches)) {
+          if (lower.includes(name)) {
+            // Reemplazar color de acento
+            modified = modified.replace(/--accent:[^;]+;/g, `--accent: ${hex};`);
+            modified = modified.replace(/background:\s*#[a-fA-F0-9]{3,6}/gi, `background: ${hex}`);
+            modified = modified.replace(/color:\s*#[a-fA-F0-9]{3,6}/gi, `color: ${hex}`);
+            break;
+          }
+        }
+
+        // 2. Detección de cambio de nombre de negocio
+        const nameMatch = instruction.match(/(?:nombre|llamad[oa]|empresa|negocio)\s+(?:a|por)?\s*["'“”]?([A-Za-zÁÉÍÓÚáéíóúñ0-9\s&]{3,35})["'“”]?/i);
+        if (nameMatch) {
+          const newName = nameMatch[1].trim();
+          if (activeTemplateData && activeTemplateData.brand) {
+            const reg = new RegExp(activeTemplateData.brand, "gi");
+            modified = modified.replace(reg, newName);
+          }
+          activeTemplateData.brand = newName;
+          document.getElementById("template-title").innerText = `${newName} (${activeTemplateData.label || 'Diseño Web'})`;
+        }
+
+        // 3. Detección de número de WhatsApp
+        const waMatch = instruction.match(/(?:\+?52\s?)?(\d{10})/);
+        if (waMatch) {
+          const newWa = waMatch[1];
+          modified = modified.replace(/wa\.me\/[0-9]+/g, `wa.me/52${newWa}`);
+          modified = modified.replace(/\+52\s?[0-9\s]{10,14}/g, `+52 ${newWa}`);
+        }
+
+        // 4. Detección de modo oscuro / claro
+        if (lower.includes("modo oscuro") || lower.includes("dark")) {
+          modified = modified.replace(/background:\s*#ffffff/gi, "background: #0b0f19");
+          modified = modified.replace(/color:\s*#0f172a/gi, "color: #f8fafc");
+        } else if (lower.includes("modo claro") || lower.includes("light")) {
+          modified = modified.replace(/background:\s*#0b0f19/gi, "background: #ffffff");
+          modified = modified.replace(/color:\s*#f8fafc/gi, "color: #0f172a");
+        }
+
+        currentHTML = modified;
+        renderIframe(currentHTML);
+
+        loading.classList.add("hidden");
+        loading.classList.remove("flex");
+
+        if (aiFailed) {
+          addChatMessage("bot", `⚠️ <strong>La IA (Groq) no respondió, así que apliqué el cambio con el motor local.</strong><br>Tu instrucción fue: <em>"${instruction}"</em>.<br>Si quieres intentarlo de nuevo con IA, pulsa el botón.<br><button onclick="window.DMDRetryEditorAI()" style="margin-top:6px;padding:6px 12px;border-radius:999px;background:#1c1c1c;color:#fff;font-weight:700;cursor:pointer">↻ Reintentar con IA</button>`);
+        } else {
+          addChatMessage("bot", `✅ <strong>¡Cambio aplicado con éxito!</strong><br>He actualizado el código de la plantilla según tu instrucción: <em>"${instruction}"</em>.<br>Revisa el resultado interactivo en la pantalla derecha.`);
+        }
+      }, 1200);
+    }
+
+    function addChatMessage(sender, text) {
+      const container = document.getElementById("ai-chat-messages");
+      const div = document.createElement("div");
+      if (sender === "user") {
+        div.className = "ai-chat-bubble-user p-3 max-w-[85%] self-end ml-auto text-xs font-semibold shadow-xs";
+        div.innerHTML = `<p>${text}</p>`;
+      } else {
+        div.className = "ai-chat-bubble-bot p-3.5 space-y-1 text-xs shadow-xs leading-relaxed animate-in fade-in";
+        div.innerHTML = `<div class="font-black text-[#f0467f] text-[10px] uppercase tracking-wider">✨ Copilot IA:</div><p>${text}</p>`;
+      }
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function resetTemplateOriginal() {
+      currentHTML = originalHTML;
+      renderIframe(currentHTML);
+      addChatMessage("bot", `🔄 Plantilla restaurada a su diseño original.`);
+    }
+
+    // ==================== MODAL DE PAYWALL / SUSCRIPCIÓN ====================
+    function openPaywallModal() {
+      document.getElementById("modal-premium-paywall").classList.remove("hidden");
+      document.getElementById("modal-premium-paywall").classList.add("flex");
+    }
+
+    function closePaywallModal() {
+      document.getElementById("modal-premium-paywall").classList.add("hidden");
+      document.getElementById("modal-premium-paywall").classList.remove("flex");
+    }
+
+    function openPremiumModal() {
+      openPaywallModal();
+    }
+
+    function activatePremiumSimulated() {
+      localStorage.setItem("dmd_user_tier", "PREMIUM");
+      localStorage.setItem("pos_license_tier", "PREMIUM");
+      localStorage.setItem("dmd_is_premium", "true");
+      updateUserTierBadge();
+      closePaywallModal();
+      document.getElementById("premium-lock-banner").classList.add("hidden");
+      addChatMessage("bot", `🎉 <strong>¡Membresía Premium Activada con Éxito!</strong><br>Ahora tienes acceso ilimitado para pedirle a la Inteligencia Artificial cualquier modificación sobre todas las plantillas del catálogo.`);
+    }
+
+    // ==================== ACCIONES: COPIAR Y DESCARGAR ====================
+    function copyGeneratedCode() {
+      navigator.clipboard.writeText(currentHTML).then(() => {
+        alert("¡Código HTML completo copiado al portapapeles!");
+      });
+    }
+
+    function downloadGeneratedHTML() {
+      const blob = new Blob([currentHTML], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${(activeTemplateData.brand || 'sitio-web').toLowerCase().replace(/\s+/g, '-')}-dmd.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function buildFallbackTemplateHTML(brand, accent, isDark) {
+      const bg = isDark ? "#0f172a" : "#ffffff";
+      const text = isDark ? "#f8fafc" : "#0f172a";
+      const acc = accent || "#2563eb";
+      return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>${brand}</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 0; background:${bg}; color:${text}; }
+    header { background:${acc}; color:#fff; padding:20px 40px; display:flex; justify-content:space-between; align-items:center; }
+    .hero { padding: 80px 40px; text-align:center; }
+    .hero h1 { font-size: 2.8rem; margin:0 0 16px 0; }
+    .hero p { font-size: 1.2rem; opacity:0.9; max-width:600px; margin:0 auto 24px auto; }
+    .btn { background:#fff; color:${acc}; padding:14px 28px; border-radius:99px; text-decoration:none; font-weight:800; display:inline-block; }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>${brand}</h2>
+    <a href="https://wa.me/527621068212" style="color:#fff; text-decoration:none; font-weight:bold;">WhatsApp Directo</a>
+  </header>
+  <div class="hero">
+    <h1>Bienvenido a ${brand}</h1>
+    <p>Página web moderna, responsiva y optimizada para ventas digitales.</p>
+    <a href="https://wa.me/527621068212" class="btn">Contactar por WhatsApp</a>
+  </div>
+</body>
+</html>`;
+    }
+  </script>
+  <script src="https://www.dmdmx.dev/dmd-publisher.js"></script>
+  <script>
+    function publishCurrentWebpage() {
+      if (typeof window.openDmdPublishModal === 'function') {
+        window.openDmdPublishModal(currentHTML, activeTemplateData || {});
+      } else {
+        alert('Cargando motor de publicación...');
+      }
+    }
+  </script>
+</body>
+</html>

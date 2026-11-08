@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DMD | paginas web - Builder</title>
+  <meta name="description" content="Crea tu página web con IA: describe tu idea y DMD genera la página con vista previa en vivo.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DMD | Digital Mijma Dreams">
+  <meta property="og:title" content="DMD | paginas web - Builder">
+  <meta property="og:description" content="Crea tu página web con IA: describe tu idea y DMD genera la página con vista previa en vivo.">
+  <meta property="og:image" content="https://www.dmdmx.dev/assets/social/og-dmd.jpg">
+  <meta property="og:image:secure_url" content="https://www.dmdmx.dev/assets/social/og-dmd.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="DMD | paginas web - Builder · DMD Digital Mijma Dreams">
+  <meta property="og:url" content="https://dmd-paginas-web-ia.vercel.app/app.html">
+  <meta property="og:locale" content="es_MX">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="DMD | paginas web - Builder">
+  <meta name="twitter:description" content="Crea tu página web con IA: describe tu idea y DMD genera la página con vista previa en vivo.">
+  <meta name="twitter:image" content="https://www.dmdmx.dev/assets/social/og-dmd.jpg">
+  <meta name="twitter:image:alt" content="DMD | paginas web - Builder · DMD Digital Mijma Dreams">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- app-lovable.css original incrustado, para que se vea con color al abrirlo solo -->
+<style>
+/* ============================================================
+   app-lovable.css — builder con estética Lovable
+   Autocontenido: reemplaza a theme.css + app.css en app-lovable.html.
+   Crema #f7f4ed, tinta #1c1c1c, botones negros en píldora, sin glass.
+   ============================================================ */
+:root{
+  --cream:#f7f4ed; --cream-2:#f1eee6; --ink:#1c1c1c; --white:#fcfbf8; --paper:#fff;
+  --fg:#1c1c1c; --fg-82:rgba(28,28,28,.82); --muted:#5f5f5d;
+  --line:#e7e4dc; --line-strong:rgba(28,28,28,.35);
+  --tint-04:rgba(28,28,28,.05); --tint-06:rgba(28,28,28,.08);
+  --ring:rgba(28,28,28,.18);
+  --inset:rgba(255,255,255,.2) 0 .5px 0 0 inset, rgba(0,0,0,.2) 0 0 0 .5px inset, rgba(0,0,0,.05) 0 1px 2px 0;
+  --r-xs:4px; --r-sm:8px; --r-md:10px; --r-lg:14px; --r-xl:20px; --r-pill:9999px;
+  --s-1:8px; --s-2:12px; --s-3:16px; --s-4:24px;
+  --font:"Camera Plain","Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:var(--font);font-size:15px;line-height:1.5;color:var(--fg);background:var(--cream);-webkit-font-smoothing:antialiased}
+h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.03em}
+p{margin:0}
+a{color:inherit;text-decoration:none}
+button{font:inherit;cursor:pointer;color:inherit}
+.muted{color:var(--muted)}
+.mono{font-family:var(--mono)}
+
+/* ---------- botones ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:7px 16px;border-radius:var(--r-pill);border:0;background:transparent;color:var(--fg);font-size:14px;font-weight:500;line-height:1.5;white-space:nowrap;transition:background .15s,opacity .15s}
+.btn:active{opacity:.8}
+.btn:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+.btn--primary{background:var(--ink);color:var(--white);box-shadow:var(--inset)}
+.btn--primary:hover{background:#000}
+.btn--outline{background:var(--white);box-shadow:0 0 0 1px var(--line)}
+.btn--outline:hover{background:var(--paper);box-shadow:0 0 0 1px var(--line-strong)}
+.btn--ghost:hover{background:var(--tint-04)}
+.btn--lg{padding:11px 20px;font-size:15px}
+.btn--icon{width:34px;height:34px;padding:0;border-radius:var(--r-pill);color:var(--muted)}
+.btn--icon:hover{background:var(--tint-04);color:var(--fg)}
+.chip{padding:7px 14px;border-radius:var(--r-pill);border:0;background:var(--white);box-shadow:0 0 0 1px var(--line);font-size:13px;color:var(--fg)}
+.chip:hover{background:var(--paper);box-shadow:0 0 0 1px var(--line-strong)}
+.chip.is-on{background:var(--ink);color:var(--white);box-shadow:none}
+
+/* ---------- layout ---------- */
+.builder{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:var(--cream)}
+
+/* ---------- topbar ---------- */
+.topbar{height:56px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:var(--s-3);padding:0 var(--s-3);background:var(--cream);border-bottom:1px solid var(--line);z-index:20}
+.topbar__left,.topbar__right{display:flex;align-items:center;gap:var(--s-2)}
+.nav__brand{display:flex;align-items:center;gap:9px;min-width:0}
+.brand__mark{width:26px;height:26px;border-radius:7px;flex:none}
+.project{display:flex;align-items:center;gap:var(--s-2);margin-left:4px;padding-left:12px;border-left:1px solid var(--line)}
+.project__name{border:1px solid transparent;background:transparent;font:inherit;font-size:14px;font-weight:500;color:var(--fg);padding:4px 8px;border-radius:var(--r-sm);width:170px}
+.project__name:hover{background:var(--tint-04)}
+.project__name:focus{outline:none;border-color:var(--line);background:var(--paper)}
+.project__badge{font-size:12px;color:var(--muted);border-radius:var(--r-pill);padding:3px 10px;background:var(--tint-04)}
+.ai-dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--line-strong);transition:background .2s,box-shadow .2s}
+.ai-dot.is-on{background:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.18)}
+
+/* ---------- workspace ---------- */
+.workspace{flex:1;min-height:0;display:grid;grid-template-columns:248px minmax(340px,.85fr) 1.5fr;transition:grid-template-columns .2s ease}
+.workspace.no-side{grid-template-columns:0 minmax(340px,.85fr) 1.5fr}
+
+/* ---------- sidebar ---------- */
+.sidebar{border-right:1px solid var(--line);padding:var(--s-3);display:flex;flex-direction:column;gap:var(--s-2);overflow:hidden auto;background:var(--cream)}
+.workspace.no-side .sidebar{padding:0;border:0;opacity:0;pointer-events:none}
+.newbtn{width:100%}
+.sidebar__label{font-size:12px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;margin-top:var(--s-2)}
+.projects{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:2px}
+.proj{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;background:transparent;border-radius:var(--r-sm);padding:9px 10px;font-size:14px;color:var(--fg-82)}
+.proj:hover{background:var(--tint-04)}
+.proj.is-on{background:var(--paper);color:var(--fg);box-shadow:0 0 0 1px var(--line)}
+.proj__t{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.proj__x{opacity:0;border:0;background:transparent;color:var(--muted)}
+.proj:hover .proj__x{opacity:1}
+.sidebar__foot{margin-top:auto;font-size:12px}
+
+/* ---------- chat ---------- */
+.chatpane{display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--line);background:var(--cream)}
+.thread{flex:1;overflow-y:auto;padding:var(--s-4);display:flex;flex-direction:column;gap:var(--s-3)}
+.empty{margin:auto;text-align:center;max-width:360px;display:flex;flex-direction:column;gap:var(--s-2)}
+.empty h2{font-size:26px;line-height:1.15;letter-spacing:-.04em}
+.empty__ideas{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:var(--s-1)}
+.empty__label{font-size:12px;margin-top:var(--s-2);text-align:center}
+
+.msg{display:flex;gap:10px}
+.msg__avatar{flex:none;width:26px;height:26px;border-radius:var(--r-pill);display:grid;place-items:center;font-size:12px;background:var(--paper);box-shadow:0 0 0 1px var(--line)}
+.msg--user .msg__avatar{background:var(--ink);color:var(--white);box-shadow:none}
+.msg__body{flex:1;min-width:0}
+.msg__name{font-size:13px;font-weight:500;color:var(--muted);margin-bottom:3px}
+.msg__text{font-size:14.5px;color:var(--fg-82);white-space:pre-wrap;word-wrap:break-word}
+.msg--user .msg__text{color:var(--fg)}
+.caret::after{content:"▋";margin-left:2px;animation:blink 1s steps(1) infinite;color:var(--muted)}
+@keyframes blink{50%{opacity:0}}
+
+.tool{border-radius:var(--r-md);background:var(--paper);padding:10px 12px;font-size:13px;display:flex;gap:10px;align-items:flex-start;box-shadow:0 0 0 1px var(--line)}
+.tool__icon{flex:none}
+.tool__title{color:var(--fg)}
+.tool__meta{color:var(--muted);font-size:12px;margin-top:4px}
+.tool__meta code{background:var(--tint-04);padding:1px 5px;border-radius:var(--r-xs)}
+.tool--ok .tool__icon{color:#16a34a}
+.spinner{width:12px;height:12px;border-radius:50%;border:2px solid var(--tint-06);border-top-color:var(--ink);animation:spin .7s linear infinite;display:inline-block}
+.spinner--sm{width:12px;height:12px;border-width:2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------- lista de pasos en vivo (generación) ---------- */
+.gen-steps{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:14px}
+.gen-step{display:flex;gap:10px;align-items:center;color:var(--muted)}
+.gen-step--done{color:var(--fg)}
+.gen-step--active{color:var(--fg);font-weight:600}
+.gen-step__mark{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--tint-04);font-size:12px}
+.gen-step--done .gen-step__mark{background:#16a34a;color:#fff}
+.gen-step--active .gen-step__mark{background:var(--paper);box-shadow:0 0 0 1px var(--line)}
+/* Overlay de progreso sobre la vista previa (zona superior). */
+.gen-overlay{position:absolute;inset:0;z-index:20;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;background:rgba(247,244,237,.94)}
+.gen-overlay[hidden]{display:none}
+.gen-overlay__card{width:min(430px,94%);background:var(--white);border-radius:var(--r-xl);padding:18px 20px;box-shadow:0 0 0 1px var(--line),0 20px 50px -20px rgba(60,30,40,.3)}
+.gen-overlay__card h3{font-size:17px}
+.gen-overlay__card p{font-size:13px;margin-top:4px}
+/* Botón del historial (solo móvil; en escritorio el chat siempre se ve). */
+.history-toggle{display:none}
+
+/* ---------- composer (estilo prompt de Lovable) ---------- */
+.composer{flex:none;margin:0 var(--s-4) var(--s-4);padding:14px 14px 12px 18px;border-radius:var(--r-xl);background:var(--paper);display:flex;flex-direction:column;gap:6px;box-shadow:0 0 0 1px rgba(28,28,28,.08),0 16px 40px -14px rgba(60,30,40,.22);transition:box-shadow .2s}
+.composer:focus-within{box-shadow:0 0 0 1px rgba(28,28,28,.28),0 16px 40px -14px rgba(60,30,40,.28)}
+.composer__icon{display:none}
+.composer__input{border:0;background:transparent;resize:none;font:inherit;font-size:15px;color:var(--fg);outline:none;max-height:140px;min-height:44px;padding:0;width:100%}
+.composer__input::placeholder{color:#8a8a86}
+.composer__bar{display:flex;align-items:center;justify-content:flex-end;gap:8px}
+.composer__send{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%}
+.composer__send .btn--primary{padding:7px 14px}
+/* ---------- adjuntos del composer (botón "+") ---------- */
+.composer{position:relative}
+.attach-btn{font-size:20px;font-weight:600;margin-right:auto}
+.attach-menu{position:absolute;left:12px;bottom:calc(100% + 8px);z-index:30;display:flex;flex-direction:column;gap:2px;min-width:260px;background:var(--white);border-radius:var(--r-lg);box-shadow:0 0 0 1px var(--line),0 16px 40px -14px rgba(60,30,40,.35);padding:6px}
+.attach-menu[hidden]{display:none}
+.attach-menu button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:transparent;padding:11px 12px;border-radius:var(--r-sm);font-size:14px;font-weight:500;color:var(--fg)}
+.attach-menu button:hover{background:var(--tint-04)}
+.attach-chips{display:flex;flex-wrap:wrap;gap:6px}
+.attach-chips:empty{display:none}
+.attach-chip{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:3px 8px 3px 3px;border-radius:9999px;background:var(--cream-2);box-shadow:0 0 0 1px var(--line);font-size:12px;color:var(--fg-82)}
+.attach-chip img{width:26px;height:26px;border-radius:50%;object-fit:cover;flex:none}
+.attach-chip__x{border:0;background:transparent;color:var(--muted);font-size:14px;padding:0 2px;cursor:pointer}
+.attach-chip__n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px}
+
+/* ---------- stage ---------- */
+.stage{display:flex;flex-direction:column;min-width:0;background:var(--cream-2)}
+.stage__tabs{flex:none;height:48px;display:flex;align-items:center;gap:4px;padding:0 var(--s-3);border-bottom:1px solid var(--line);background:var(--cream)}
+.tab{border:0;background:transparent;padding:6px 14px;border-radius:var(--r-pill);font-size:14px;font-weight:500;color:var(--muted)}
+.tab:hover{background:var(--tint-04)}
+.tab.is-on{color:var(--fg);background:var(--paper);box-shadow:0 0 0 1px var(--line)}
+.stage__tools{margin-left:auto;display:flex;align-items:center;gap:6px}
+.devices{display:flex;gap:2px;border-radius:var(--r-pill);padding:2px;background:var(--tint-04)}
+.dev{border:0;background:transparent;padding:3px 10px;border-radius:var(--r-pill);color:var(--muted);font-size:13px}
+.dev.is-on{background:var(--paper);color:var(--fg);box-shadow:0 0 0 1px var(--line)}
+
+.stage__body{flex:1;min-height:0;position:relative}
+.view{position:absolute;inset:0;display:none}
+.view.is-on{display:flex}
+#view-preview{flex-direction:column}
+.urlbar{flex:none;height:36px;display:flex;align-items:center;gap:8px;padding:0 var(--s-3);font-size:12px;color:var(--muted);background:var(--cream-2)}
+.frameWrap{flex:1;min-height:0;display:flex;justify-content:center;padding:0 var(--s-3) var(--s-3);overflow:auto}
+#preview{width:100%;height:100%;max-width:100%;border:0;border-radius:var(--r-lg);background:#fff;box-shadow:0 0 0 1px var(--line),0 20px 50px -20px rgba(60,30,40,.25);transition:max-width .2s ease}
+
+/* código */
+.filetree{width:200px;flex:none;border-right:1px solid var(--line);background:var(--cream);padding:var(--s-2);display:flex;flex-direction:column;gap:2px}
+.file{display:flex;align-items:center;gap:7px;width:100%;text-align:left;border:0;background:transparent;padding:7px 9px;border-radius:var(--r-sm);font-size:13px;color:var(--fg-82);font-family:var(--mono)}
+.file:hover{background:var(--tint-04)}
+.file.is-on{background:var(--paper);box-shadow:0 0 0 1px var(--line);color:var(--fg)}
+.codearea{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--paper)}
+.codearea__head{flex:none;height:40px;display:flex;align-items:center;justify-content:space-between;padding:0 var(--s-3);border-bottom:1px solid var(--line);font-size:13px}
+.code{flex:1;overflow:auto;margin:0;padding:var(--s-3);font-size:12.5px;line-height:1.65;white-space:pre}
+.code .k{color:#c2410c}.code .s{color:#15803d}.code .c{color:var(--muted)}.code .t{color:#1d4ed8}
+
+/* timeline */
+.timeline{flex:1;overflow:auto;padding:var(--s-3);font-size:13px}
+.tl{position:relative;padding-left:22px;padding-bottom:12px;border-left:1px solid var(--line);margin-left:6px}
+.tl:last-child{border-left-color:transparent}
+.tl::before{content:"";position:absolute;left:-5px;top:2px;width:9px;height:9px;border-radius:50%;background:var(--cream-2);border:2px solid var(--line-strong)}
+.tl--agent::before{border-color:var(--ink);background:var(--ink)}
+.tl--user::before{border-color:#4f7dff;background:#4f7dff}
+.tl--tool::before{border-color:#16a34a;background:#16a34a}
+.tl__t{font-family:var(--mono);font-size:12px;color:var(--fg)}
+.tl__m{color:var(--muted);font-size:12px;margin-top:2px;word-break:break-word}
+.tl__time{color:var(--muted);font-size:11px}
+
+/* ---------- modal ---------- */
+.modal{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:var(--s-4);background:rgba(28,28,28,.36)}
+.modal[hidden]{display:none}
+.modal__box{width:100%;max-width:460px;max-height:90vh;overflow:auto;background:var(--white);border-radius:var(--r-xl);padding:var(--s-4);box-shadow:0 24px 60px rgba(0,0,0,.25)}
+.modal__head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.modal__head h3{font-size:18px}
+.modal__lead{font-size:13px;line-height:1.5;margin:0 0 var(--s-3)}
+.modal__box .field{display:block;margin-bottom:10px}
+.modal__box .field span{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:4px}
+.modal__box .field input,.modal__box .field select{width:100%;padding:9px 12px;font:inherit;font-size:14px;border:0;border-radius:var(--r-md);background:var(--paper);box-shadow:0 0 0 1px var(--line);color:var(--fg)}
+.modal__box .field input:focus,.modal__box .field select:focus{outline:none;box-shadow:0 0 0 2px var(--ring)}
+.modal__box .check{display:flex;align-items:center;gap:8px;font-size:14px;margin:var(--s-2) 0;cursor:pointer}
+.modal__note{font-size:12px;line-height:1.5;margin:var(--s-2) 0 var(--s-3)}
+.modal__foot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.modal__actions{display:flex;gap:8px}
+.modal__status{font-size:12.5px;max-width:55%}
+
+/* ---------- responsive (móvil: una vista a la vez) ---------- */
+.viewswitch{display:none}
+.mmenu{display:none}
+.side-backdrop{display:none}
+@media(max-width:1100px){
+  /* El builder ocupa exactamente el viewport visible: el compositor
+     nunca queda debajo del pliegue en Safari iOS (100vh incluye el
+     área bajo la barra del navegador). */
+  body.builder{position:fixed;inset:0;overflow:hidden}
+  /* UNA sola pantalla (estilo ChatGPT/Lovable): ARRIBA la vista
+     previa de la página generada, ABAJO fijo el composer para
+     escribir el prompt o el cambio. Ya NO hay dos pestañas Chat /
+     Vista previa que se tapen entre sí: el historial del chat vive
+     colapsado arriba del composer y solo se abre si se toca. */
+  .workspace,.workspace.show-side,.workspace.no-side{display:flex;flex-direction:column;grid-template-columns:none}
+  .workspace{position:relative}
+  .sidebar{position:fixed;left:0;top:56px;bottom:0;width:264px;max-width:84vw;z-index:40;background:var(--cream);border-right:1px solid var(--line);box-shadow:0 20px 50px -20px rgba(60,30,40,.35);padding:var(--s-3);opacity:0;pointer-events:none;transform:translateX(-102%);transition:transform .2s ease,opacity .2s}
+  .workspace.show-side .sidebar{opacity:1;pointer-events:auto;transform:none}
+  .side-backdrop{display:block;position:fixed;inset:0;z-index:35;background:rgba(28,28,28,.3)}
+  .side-backdrop[hidden]{display:none}
+  /* La vista previa es la protagonista: ocupa todo el espacio de arriba. */
+  .stage{position:relative;inset:auto;z-index:1;display:flex;flex:1 1 auto;min-height:0;order:1}
+  .builder.show-stage .stage{display:flex}
+  /* El chat queda abajo, fijo, sin tapar la página: solo el composer
+     se ve siempre; el historial está colapsado hasta tocarlo. */
+  .chatpane{order:2;flex:none;display:flex;flex-direction:column;border-right:0;border-top:1px solid var(--line)}
+  .builder.show-stage .chatpane{display:flex}
+  .thread{display:none;flex:none;max-height:38vh;padding:12px 16px}
+  .thread.open{display:flex}
+  .history-toggle{display:block;flex:none;margin:10px 12px 0;padding:10px 14px;border-radius:9999px;border:0;background:var(--white);box-shadow:0 0 0 1px var(--line);font-size:14px;font-weight:500;text-align:left}
+  .composer{margin:8px 12px 12px}
+  .project__badge{display:none}
+  .devices{display:none}
+  .stage__tabs{height:52px;padding:0 8px;gap:2px}
+  .tab{padding:8px 12px;min-height:44px}
+  .filetree{width:140px}
+  /* Topbar compacta */
+  .topbar{padding:0 10px;gap:8px}
+  .topbar__left{gap:8px;min-width:0;flex:1}
+  .topbar__right{gap:6px;flex:none}
+  .topbar .btn--icon{width:44px;height:44px}
+  .nav__brand{flex:none}
+  .project{flex:1;min-width:0;margin-left:0;padding-left:8px}
+  .project__name{width:100%;min-width:0;font-size:14px;text-overflow:ellipsis}
+  .topbar__right .btn--ghost{padding:7px 10px;min-height:44px}
+  .topbar__right #aiBtn .ai-label{display:none}
+  .topbar__right a[href="editor-ia.html"],.topbar__right #shareBtn{display:none}
+  .topbar #publishBtn{min-height:44px;padding:9px 14px}
+  /* Pestañas Chat / Vista previa: ELIMINADAS en móvil (una sola
+     pantalla: preview arriba, composer abajo). */
+  .viewswitch{display:none}
+  /* Menú móvil */
+  .mmenu{display:block;position:fixed;top:60px;left:10px;z-index:60;width:240px;max-width:calc(100vw - 20px);background:var(--white);border-radius:var(--r-lg);box-shadow:0 0 0 1px var(--line),0 20px 50px -20px rgba(60,30,40,.35);padding:6px}
+  .mmenu[hidden]{display:none}
+  .mmenu__item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:transparent;padding:12px;border-radius:var(--r-sm);font-size:15px;font-weight:500;color:var(--fg);min-height:44px}
+  .mmenu__item:hover{background:var(--tint-04)}
+  /* Compositor a ancho completo y sin zoom de iOS al enfocar */
+  .composer{margin:0 12px 12px}
+  .composer__input{font-size:16px}
+}
+
+</style>
+</head>
+<body class="builder">
+
+<!-- ================= TOPBAR ================= -->
+<header class="topbar">
+  <div class="topbar__left">
+    <button class="btn btn--icon" id="toggleSidebar" title="Proyectos" aria-label="Mostrar proyectos">☰</button>
+    <a class="nav__brand" href="index.html" aria-label="DMD | paginas web">
+      <img class="brand__mark" src="assets/logo-dmd.svg" alt="DMD | paginas web" />
+    </a>
+    <div class="project">
+      <input id="projectName" class="project__name" value="mi-app" aria-label="Nombre del proyecto" />
+      <span class="project__badge">Agent mode</span>
+    </div>
+  </div>
+  <div class="topbar__right">
+    <button class="btn btn--ghost" id="aiBtn" title="Configurar IA real"><span class="ai-dot" id="aiDot"></span><span class="ai-label">IA</span></button>
+    <a class="btn btn--ghost" href="editor-ia.html">Editor IA</a>
+    <button class="btn btn--ghost" id="shareBtn">Compartir</button>
+    <button class="btn btn--primary" id="publishBtn">Publicar</button>
+  </div>
+</header>
+
+<!-- Pestañas móvil: Chat / Vista previa (solo ≤1100px) -->
+<div class="viewswitch" id="viewSwitch" role="tablist" aria-label="Vista del builder">
+  <button class="vsw is-on" data-mview="chat" role="tab" aria-selected="true">💬 Chat</button>
+  <button class="vsw" data-mview="stage" role="tab" aria-selected="false">🖥️ Vista previa</button>
+</div>
+
+<!-- Menú móvil (solo ≤1100px) -->
+<div class="mmenu" id="mobileMenu" hidden>
+  <button class="mmenu__item" id="mMenuProjects" type="button">▦&nbsp; Proyectos</button>
+  <a class="mmenu__item" href="editor-ia.html">✦&nbsp; Editor IA</a>
+  <button class="mmenu__item" id="mMenuShare" type="button">↗&nbsp; Compartir</button>
+</div>
+<div class="side-backdrop" id="sideBackdrop" hidden></div>
+
+<div class="workspace" id="workspace">
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="sidebar" id="sidebar">
+    <button class="btn btn--outline btn--lg newbtn" id="newProject">+ Nuevo proyecto</button>
+    <div class="sidebar__label muted">Tus proyectos</div>
+    <ul class="projects" id="projects"></ul>
+    <div class="sidebar__foot muted">
+      <span>Trajectory events: <b id="evtCount">0</b></span>
+    </div>
+  </aside>
+
+  <!-- ================= CHAT ================= -->
+  <section class="chatpane">
+    <button class="history-toggle" id="historyToggle" type="button" aria-expanded="false">💬 Historial del chat</button>
+    <div class="thread" id="thread">
+      <div class="empty" id="empty">
+        <h2>¿Qué quieres construir hoy?</h2>
+        <p class="muted">Describe tu idea y la IA generará el código y el preview en vivo.</p>
+        <div class="empty__ideas" id="emptyIdeas"></div>
+        <div class="empty__label muted">o empieza con una plantilla</div>
+        <div class="empty__ideas" id="emptyTpl"></div>
+      </div>
+    </div>
+
+    <form class="composer" id="composer" autocomplete="off">
+      <div class="composer__icon" aria-hidden="true">✦</div>
+      <!-- Adjuntos (botón "+"): fotos de producto, logo y archivos/ZIP. -->
+      <div class="attach-menu" id="attachMenu" hidden>
+        <button type="button" data-attach="photo">📷 Subir foto de producto</button>
+        <button type="button" data-attach="logo">🖼️ Subir logo</button>
+        <button type="button" data-attach="file">📄 Subir archivo / ZIP de mi página</button>
+      </div>
+      <input type="file" id="attachPhoto" accept="image/*" hidden>
+      <input type="file" id="attachLogo" accept="image/*" hidden>
+      <input type="file" id="attachFile" accept=".html,.htm,.zip" hidden>
+      <div class="attach-chips" id="attachChips"></div>
+      <textarea id="prompt" class="composer__input" rows="2" placeholder="Pide un cambio o describe tu app…"></textarea>
+      <div class="composer__bar">
+        <div class="composer__send">
+          <button type="button" class="btn btn--icon attach-btn" title="Adjuntar foto, logo o archivo" id="attachBtn" aria-label="Adjuntar">+</button>
+          <button type="button" class="btn btn--icon" title="Sugerencias" id="chipsBtn" aria-label="Sugerencias">✦</button>
+          <button type="submit" class="btn btn--primary" id="sendBtn">Construir <span>↑</span></button>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <!-- ================= STAGE ================= -->
+  <section class="stage">
+    <div class="stage__tabs" role="tablist">
+      <button class="tab is-on" data-view="preview" role="tab">Preview</button>
+      <button class="tab" data-view="code" role="tab">Código</button>
+      <button class="tab" data-view="timeline" role="tab">Timeline</button>
+      <div class="stage__tools">
+        <div class="devices" id="devices">
+          <button class="dev is-on" data-w="100%" title="Escritorio">▬</button>
+          <button class="dev" data-w="820px" title="Tablet">▭</button>
+          <button class="dev" data-w="390px" title="Móvil">▯</button>
+        </div>
+        <button class="btn btn--icon" id="refreshBtn" title="Recargar preview" aria-label="Recargar">⟳</button>
+        <button class="btn btn--icon" id="openBtn" title="Abrir en pestaña" aria-label="Abrir">↗</button>
+      </div>
+    </div>
+
+    <div class="stage__body">
+      <!-- Overlay de progreso: lista de pasos en vivo sobre la vista
+           previa mientras se genera la página. -->
+      <div class="gen-overlay" id="genOverlay" hidden>
+        <div class="gen-overlay__card">
+          <h3>Creando tu página…</h3>
+          <p class="muted">Esto es lo que está haciendo la IA:</p>
+          <div id="genStepsOverlay"></div>
+        </div>
+      </div>
+      <!-- Preview -->
+      <div class="view is-on" id="view-preview">
+        <div class="urlbar"><span class="lock">●</span><span id="url"></span></div>
+        <div class="frameWrap" id="frameWrap">
+          <iframe id="preview" title="Preview de la app" sandbox="allow-scripts allow-forms allow-modals allow-popups"></iframe>
+        </div>
+      </div>
+
+      <!-- Código -->
+      <div class="view" id="view-code">
+        <div class="filetree" id="filetree"></div>
+        <div class="codearea">
+          <div class="codearea__head"><span class="mono" id="codeFile">styles.css</span>
+            <button class="btn btn--ghost" id="copyCode">Copiar</button></div>
+          <pre class="code"><code id="code" class="mono"></code></pre>
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="view" id="view-timeline">
+        <div class="timeline" id="timeline"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ================= MODAL: AJUSTES DE IA ================= -->
+<div class="modal" id="aiModal" hidden>
+  <div class="modal__box" role="dialog" aria-modal="true" aria-labelledby="aiTitle">
+    <header class="modal__head">
+      <h3 id="aiTitle">Conectar una IA real</h3>
+      <button class="btn btn--icon" id="aiClose" aria-label="Cerrar">×</button>
+    </header>
+    <p class="muted modal__lead">
+      Por defecto el builder usa la IA de DMD (Groq, en el servidor) y si no
+      responde cae al motor local determinista. Opcional: conecta tu propia
+      API compatible con OpenAI para que el agente razone con tu LLM.
+    </p>
+
+    <label class="field">
+      <span>Proveedor</span>
+      <select id="aiPreset">
+        <option value="openai">OpenAI</option>
+        <option value="openrouter">OpenRouter</option>
+        <option value="groq">Groq</option>
+        <option value="freellmapi">FreeLLMAPI (local)</option>
+        <option value="ollama">Ollama (local)</option>
+        <option value="lmstudio">LM Studio (local)</option>
+        <option value="custom">Personalizado</option>
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Base URL</span>
+      <input id="aiBase" type="text" spellcheck="false" placeholder="https://api.openai.com/v1" />
+    </label>
+
+    <label class="field">
+      <span>Modelo</span>
+      <input id="aiModel" type="text" spellcheck="false" placeholder="gpt-4o-mini" />
+    </label>
+
+    <label class="field">
+      <span>Tiempo de espera (segundos)</span>
+      <input id="aiTimeout" type="number" min="5" step="5" placeholder="90" />
+    </label>
+
+    <label class="check">
+      <input type="checkbox" id="aiEnabled" />
+      <span>Usar IA real en el agente</span>
+    </label>
+
+    <p class="modal__note muted">
+      La clave se guarda solo en tu navegador (localStorage). Ollama y FreeLLMAPI
+      necesitan su servicio local en marcha; OpenRouter y Groq funcionan directo.
+    </p>
+
+    <footer class="modal__foot">
+      <span class="modal__status muted" id="aiStatus"></span>
+      <div class="modal__actions">
+        <button class="btn btn--outline" id="aiTest">Probar conexión</button>
+        <button class="btn btn--primary" id="aiSave">Guardar</button>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<script src="assets/js/trajectory.js"></script>
+<script src="assets/js/business-types.js"></script>
+<script src="assets/js/image-catalog.js"></script>
+<script src="assets/js/generator.js"></script>
+<script src="assets/js/api-client.js"></script>
+<script src="assets/js/llm.js"></script>
+<script src="assets/js/app.js"></script>
+<script>
+/* Plantillas: ?example=<slug> carga un ejemplo ya construido (sin Groq ni
+   servidor). ?prompt=... sigue enviando el prompt al agente, como antes.
+   Se aplica en DOMContentLoaded y de nuevo 400 ms despues, para que no lo
+   pise la inicializacion de assets/js/app.js. */
+var EXAMPLES = {
+  consultora: {title: "Consultora — ejemplo", name: "consultora", prompt: "Landing para mi consultora con servicios, testimonios y contacto", html: `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Consultora Nova — Servicios</title><style>body{margin:0;font-family:Inter,system-ui,sans-serif;background:#f7f4ed;color:#1c1c1c}header{display:flex;justify-content:space-between;align-items:center;padding:18px 32px}.logo{font-weight:800}.btn{background:#111;color:#fff;border:0;border-radius:999px;padding:10px 18px;cursor:pointer}.hero{max-width:820px;margin:40px auto;text-align:center;padding:0 20px}.hero h1{font-size:44px;line-height:1.1;margin:12px 0}.grad{background:linear-gradient(90deg,#ff8a4c,#f0467f,#4f7dff);-webkit-background-clip:text;background-clip:text;color:transparent}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:900px;margin:36px auto;padding:0 20px}.card{background:#fcfbf8;border:1px solid #e8e2d6;border-radius:16px;padding:20px}.card h3{margin:0 0 6px}.card p{margin:0;color:#5f5f5d}.quote{max-width:640px;margin:36px auto;text-align:center;font-size:18px;color:#5f5f5d;padding:0 20px}.cta{text-align:center;padding:36px 20px 56px}footer{text-align:center;color:#5f5f5d;padding:24px;font-size:13px}</style></head><body><header><span class="logo">Consultora Nova</span><button class="btn">Empezar</button></header><section class="hero"><h1>Crece tu negocio con <span class="grad">estrategia clara</span></h1><p>Acompañamos a empresas en crecimiento con consultoría, finanzas y operaciones.</p><p><button class="btn">Empezar ahora</button></p></section><section class="cards"><div class="card"><h3>Estrategia</h3><p>Planes de crecimiento medibles, trimestre a trimestre.</p></div><div class="card"><h3>Finanzas</h3><p>Ordenamos tus números para decidir con confianza.</p></div><div class="card"><h3>Operaciones</h3><p>Procesos simples que escalan contigo.</p></div></section><p class="quote">&ldquo;Nova nos ayudó a duplicar clientes en seis meses.&rdquo;</p><section class="cta"><h2>Agenda una llamada gratuita</h2><button class="btn">Crear mi proyecto</button></section><footer>Hecho con DMD | paginas web</footer></body></html>`},
+  reservas: {title: "Reservas — ejemplo", name: "reservas", prompt: "App de reservas con agenda y confirmaciones", html: `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ReservaYa — Agenda y confirmaciones</title><style>body{margin:0;font-family:Inter,system-ui,sans-serif;background:#f7f4ed;color:#1c1c1c}header{display:flex;justify-content:space-between;align-items:center;padding:18px 32px}.logo{font-weight:800}.btn{background:#111;color:#fff;border:0;border-radius:999px;padding:10px 18px;cursor:pointer}.hero{max-width:820px;margin:40px auto;text-align:center;padding:0 20px}.hero h1{font-size:44px;line-height:1.1;margin:12px 0}.grad{background:linear-gradient(90deg,#ff8a4c,#f0467f,#4f7dff);-webkit-background-clip:text;background-clip:text;color:transparent}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:900px;margin:36px auto;padding:0 20px}.card{background:#fcfbf8;border:1px solid #e8e2d6;border-radius:16px;padding:20px}.card h3{margin:0 0 6px}.card p{margin:0;color:#5f5f5d}.quote{max-width:640px;margin:36px auto;text-align:center;font-size:18px;color:#5f5f5d;padding:0 20px}.cta{text-align:center;padding:36px 20px 56px}footer{text-align:center;color:#5f5f5d;padding:24px;font-size:13px}</style></head><body><header><span class="logo">ReservaYa</span><button class="btn">Empezar</button></header><section class="hero"><h1>Reserva en segundos, <span class="grad">sin llamadas</span></h1><p>Agenda citas, recibe confirmaciones automáticas y evita huecos en tu día.</p><p><button class="btn">Empezar ahora</button></p></section><section class="cards"><div class="card"><h3>Agenda en vivo</h3><p>Horarios reales, siempre actualizados.</p></div><div class="card"><h3>Confirmaciones</h3><p>Recordatorios por correo y mensaje.</p></div><div class="card"><h3>Pagos</h3><p>Cobra el anticipo al reservar.</p></div></section><p class="quote">&ldquo;Mis clientes ya no faltan a sus citas.&rdquo;</p><section class="cta"><h2>Abre tu agenda hoy</h2><button class="btn">Crear mi proyecto</button></section><footer>Hecho con DMD | paginas web</footer></body></html>`},
+  ventas: {title: "Panel de ventas — ejemplo", name: "panel-ventas", prompt: "Panel de ventas con métricas en tiempo real", html: `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Panel de ventas — Métricas</title><style>body{margin:0;font-family:Inter,system-ui,sans-serif;background:#f7f4ed;color:#1c1c1c}header{display:flex;justify-content:space-between;align-items:center;padding:18px 32px}.logo{font-weight:800}.btn{background:#111;color:#fff;border:0;border-radius:999px;padding:10px 18px;cursor:pointer}.hero{max-width:820px;margin:40px auto;text-align:center;padding:0 20px}.hero h1{font-size:44px;line-height:1.1;margin:12px 0}.grad{background:linear-gradient(90deg,#ff8a4c,#f0467f,#4f7dff);-webkit-background-clip:text;background-clip:text;color:transparent}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:900px;margin:36px auto;padding:0 20px}.card{background:#fcfbf8;border:1px solid #e8e2d6;border-radius:16px;padding:20px}.card h3{margin:0 0 6px}.card p{margin:0;color:#5f5f5d}.quote{max-width:640px;margin:36px auto;text-align:center;font-size:18px;color:#5f5f5d;padding:0 20px}.cta{text-align:center;padding:36px 20px 56px}footer{text-align:center;color:#5f5f5d;padding:24px;font-size:13px}</style></head><body><header><span class="logo">Ventas · Panel</span><button class="btn">Empezar</button></header><section class="hero"><h1>Tus ventas, <span class="grad">en tiempo real</span></h1><p>Ingresos, pedidos y productos top en un solo panel, actualizado al momento.</p><p><button class="btn">Empezar ahora</button></p></section><section class="cards"><div class="card"><h3>Ingresos hoy</h3><p>$48,200 MXN · +18% vs. ayer</p></div><div class="card"><h3>Pedidos</h3><p>132 pedidos · 96% entregados</p></div><div class="card"><h3>Top producto</h3><p>Café de olla — 54 unidades</p></div></section><p class="quote">&ldquo;Por fin veo qué se vende sin esperar al cierre.&rdquo;</p><section class="cta"><h2>Conecta tu tienda</h2><button class="btn">Crear mi proyecto</button></section><footer>Hecho con DMD | paginas web</footer></body></html>`},
+  portafolio: {title: "Portafolio — ejemplo", name: "portafolio", prompt: "Portafolio para mostrar mi trabajo", html: `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ana Ruiz — Portafolio</title><style>body{margin:0;font-family:Inter,system-ui,sans-serif;background:#f7f4ed;color:#1c1c1c}header{display:flex;justify-content:space-between;align-items:center;padding:18px 32px}.logo{font-weight:800}.btn{background:#111;color:#fff;border:0;border-radius:999px;padding:10px 18px;cursor:pointer}.hero{max-width:820px;margin:40px auto;text-align:center;padding:0 20px}.hero h1{font-size:44px;line-height:1.1;margin:12px 0}.grad{background:linear-gradient(90deg,#ff8a4c,#f0467f,#4f7dff);-webkit-background-clip:text;background-clip:text;color:transparent}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:900px;margin:36px auto;padding:0 20px}.card{background:#fcfbf8;border:1px solid #e8e2d6;border-radius:16px;padding:20px}.card h3{margin:0 0 6px}.card p{margin:0;color:#5f5f5d}.quote{max-width:640px;margin:36px auto;text-align:center;font-size:18px;color:#5f5f5d;padding:0 20px}.cta{text-align:center;padding:36px 20px 56px}footer{text-align:center;color:#5f5f5d;padding:24px;font-size:13px}</style></head><body><header><span class="logo">Ana Ruiz</span><button class="btn">Empezar</button></header><section class="hero"><h1>Diseño que <span class="grad">cuenta historias</span></h1><p>Diseñadora visual. Branding, editorial y producto digital para marcas con carácter.</p><p><button class="btn">Empezar ahora</button></p></section><section class="cards"><div class="card"><h3>Branding</h3><p>Identidades que se reconocen a primera vista.</p></div><div class="card"><h3>Editorial</h3><p>Revistas y libros con ritmo y aire.</p></div><div class="card"><h3>Producto digital</h3><p>Interfaces claras, bonitas y útiles.</p></div></section><p class="quote">&ldquo;Ana transformó por completo nuestra marca.&rdquo;</p><section class="cta"><h2>Trabajemos juntos</h2><button class="btn">Crear mi proyecto</button></section><footer>Hecho con DMD | paginas web</footer></body></html>`},
+  saas: {title: "SaaS — ejemplo", name: "saas", prompt: "Landing SaaS con producto y precios", html: `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Nube — SaaS</title><style>body{margin:0;font-family:Inter,system-ui,sans-serif;background:#f7f4ed;color:#1c1c1c}header{display:flex;justify-content:space-between;align-items:center;padding:18px 32px}.logo{font-weight:800}.btn{background:#111;color:#fff;border:0;border-radius:999px;padding:10px 18px;cursor:pointer}.hero{max-width:820px;margin:40px auto;text-align:center;padding:0 20px}.hero h1{font-size:44px;line-height:1.1;margin:12px 0}.grad{background:linear-gradient(90deg,#ff8a4c,#f0467f,#4f7dff);-webkit-background-clip:text;background-clip:text;color:transparent}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:900px;margin:36px auto;padding:0 20px}.card{background:#fcfbf8;border:1px solid #e8e2d6;border-radius:16px;padding:20px}.card h3{margin:0 0 6px}.card p{margin:0;color:#5f5f5d}.quote{max-width:640px;margin:36px auto;text-align:center;font-size:18px;color:#5f5f5d;padding:0 20px}.cta{text-align:center;padding:36px 20px 56px}footer{text-align:center;color:#5f5f5d;padding:24px;font-size:13px}</style></head><body><header><span class="logo">Nube</span><button class="btn">Empezar</button></header><section class="hero"><h1>Tu equipo, <span class="grad">en una sola app</span></h1><p>Proyectos, tareas y reportes sin hojas de cálculo. Empieza gratis, cancela cuando quieras.</p><p><button class="btn">Empezar ahora</button></p></section><section class="cards"><div class="card"><h3>Proyectos</h3><p>Todo tu trabajo organizado por equipo.</p></div><div class="card"><h3>Automatizaciones</h3><p>Que lo repetitivo se haga solo.</p></div><div class="card"><h3>Reportes</h3><p>El avance de cada semana, en un vistazo.</p></div></section><p class="quote">&ldquo;Pasamos de cinco herramientas a una sola.&rdquo;</p><section class="cta"><h2>Prueba Nube gratis 14 días</h2><button class="btn">Crear mi proyecto</button></section><footer>Hecho con DMD | paginas web</footer></body></html>`},
+  cafe: {title: "Tienda de café — ejemplo", name: "tienda-cafe", prompt: "Tienda de café con catálogo y pedidos", html: `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Café Lento — Tienda</title><style>body{margin:0;font-family:Inter,system-ui,sans-serif;background:#f7f4ed;color:#1c1c1c}header{display:flex;justify-content:space-between;align-items:center;padding:18px 32px}.logo{font-weight:800}.btn{background:#111;color:#fff;border:0;border-radius:999px;padding:10px 18px;cursor:pointer}.hero{max-width:820px;margin:40px auto;text-align:center;padding:0 20px}.hero h1{font-size:44px;line-height:1.1;margin:12px 0}.grad{background:linear-gradient(90deg,#ff8a4c,#f0467f,#4f7dff);-webkit-background-clip:text;background-clip:text;color:transparent}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:900px;margin:36px auto;padding:0 20px}.card{background:#fcfbf8;border:1px solid #e8e2d6;border-radius:16px;padding:20px}.card h3{margin:0 0 6px}.card p{margin:0;color:#5f5f5d}.quote{max-width:640px;margin:36px auto;text-align:center;font-size:18px;color:#5f5f5d;padding:0 20px}.cta{text-align:center;padding:36px 20px 56px}footer{text-align:center;color:#5f5f5d;padding:24px;font-size:13px}</style></head><body><header><span class="logo">Café Lento</span><button class="btn">Empezar</button></header><section class="hero"><h1>Café de especialidad, <span class="grad">a tu casa</span></h1><p>Granos tostados cada semana. Pide en línea y recíbelo fresco en 24 horas.</p><p><button class="btn">Empezar ahora</button></p></section><section class="cards"><div class="card"><h3>Café de olla</h3><p>Tueste medio · $180 MXN / 250 g</p></div><div class="card"><h3>Cold brew</h3><p>Suave y dulce · $95 MXN</p></div><div class="card"><h3>Suscripción</h3><p>Tu café favorito, cada mes, -15%.</p></div></section><p class="quote">&ldquo;El mejor café que he probado fuera de una cafetería.&rdquo;</p><section class="cta"><h2>Pide tu primer paquete</h2><button class="btn">Crear mi proyecto</button></section><footer>Hecho con DMD | paginas web</footer></body></html>`}
+};
+function loadExample(slug){
+  var ex = EXAMPLES[slug];
+  if(!ex) return false;
+  var $ = function(id){ return document.getElementById(id); };
+  var pv = $('preview'); if(pv) pv.srcdoc = ex.html;
+  /* Puente al Editor IA: guarda este ejemplo como plantilla activa para
+     que editor-ia.html lo abra directamente. */
+  try{
+    var m = ex.html.match(/<title>([^<]*)/);
+    var brand = m ? m[1].split('—')[0].trim() : ex.name;
+    localStorage.setItem('dmd_editor_template', JSON.stringify({brand: brand, label: ex.title, accent: '#f0467f', dark: false, isPremium: false, html: ex.html}));
+  }catch(e){}
+  var url = $('url'); if(url) url.textContent = window.location.href;
+  var pn = $('projectName'); if(pn) pn.value = ex.name;
+  if(!$('exampleBadge') && pn && pn.parentNode){
+    var b = document.createElement('span');
+    b.id = 'exampleBadge'; b.className = 'project__badge';
+    b.style.background = 'linear-gradient(90deg,#ff8a4c,#f0467f,#4f7dff)';
+    b.style.color = '#fff'; b.textContent = 'Ejemplo';
+    pn.parentNode.insertBefore(b, pn.nextSibling);
+  }
+  var code = $('code'); if(code) code.textContent = ex.html;
+  var cf = $('codeFile'); if(cf) cf.textContent = 'index.html';
+  var ft = $('filetree'); if(ft) ft.textContent = 'index.html';
+  var tl = $('timeline');
+  if(tl) tl.innerHTML = '<div>Plantilla cargada: ' + ex.title + '</div>'
+    + '<div>Preview listo — sin esperar a Groq</div>'
+    + '<div>Escribe un cambio en el prompt para editarlo</div>';
+  var ec = $('evtCount'); if(ec) ec.textContent = '3';
+  var empty = $('empty'); if(empty) empty.style.display = 'none';
+  var th = $('thread');
+  if(th && !$('exampleNote')){
+    var n = document.createElement('div');
+    n.id = 'exampleNote'; n.className = 'muted';
+    n.textContent = 'Ejemplo cargado: ' + ex.title
+      + ' — escribe un cambio abajo para editarlo con IA.';
+    th.insertBefore(n, th.firstChild);
+  }
+  var input = $('prompt'); if(input) input.value = ex.prompt;
+  if (window.matchMedia && window.matchMedia('(max-width: 1100px)').matches) {
+    if (window.DMDShowStage) window.DMDShowStage();
+    else document.body.classList.add('show-stage');
+  }
+  return true;
+}
+var __promptSent = false;
+/* P0-1: esperar a que el health check del backend resuelva antes de
+   auto-enviar ?prompt=. Antes se enviaba a los ~300 ms, cuando
+   LLM.initialize() (asíncrono, hasta 8 s) aún no había puesto
+   isConfigured() en true, y el builder caía al motor local con
+   "Backend de IA no disponible". Tope de 12 s por seguridad: si el
+   health se cuelga, el prompt se envía de todos modos. */
+function waitForLLM(){
+  if(window.LLM && window.LLM.initialize){
+    var p = null;
+    try { p = window.LLM.initialize(); } catch(e) { p = null; }
+    if(p && p.then){
+      var timeout = new Promise(function(res){ setTimeout(res, 12000); });
+      return Promise.race([p.then(function(){}, function(){}), timeout]);
+    }
+  }
+  return Promise.resolve();
+}
+async function initFromQuery(){
+  var q = new URLSearchParams(location.search);
+  var slug = q.get('example');
+  if(slug && EXAMPLES[slug]){ loadExample(slug); return; }
+  var p = q.get('prompt');
+  if(!p || __promptSent) return;
+  var input = document.getElementById('prompt'),
+      form = document.getElementById('composer');
+  if(!input || !form) return;
+  __promptSent = true;
+  input.value = p;
+  await waitForLLM();
+  try{ form.requestSubmit(); }catch(e){}
+}
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', function(){ initFromQuery(); setTimeout(initFromQuery, 400); });
+} else { initFromQuery(); setTimeout(initFromQuery, 400); }
+</script>
+</body>
+</html>

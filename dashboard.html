@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Groq - DMD</title>
+  <meta name="description" content="Panel de DMD | paginas web: generación con IA (Groq) y estado del backend.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="DMD | Digital Mijma Dreams">
+  <meta property="og:title" content="Dashboard Groq - DMD">
+  <meta property="og:description" content="Panel de DMD | paginas web: generación con IA (Groq) y estado del backend.">
+  <meta property="og:image" content="https://www.dmdmx.dev/assets/social/og-dmd.jpg">
+  <meta property="og:image:secure_url" content="https://www.dmdmx.dev/assets/social/og-dmd.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Dashboard Groq - DMD · DMD Digital Mijma Dreams">
+  <meta property="og:url" content="https://dmd-paginas-web-ia.vercel.app/dashboard.html">
+  <meta property="og:locale" content="es_MX">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Dashboard Groq - DMD">
+  <meta name="twitter:description" content="Panel de DMD | paginas web: generación con IA (Groq) y estado del backend.">
+  <meta name="twitter:image" content="https://www.dmdmx.dev/assets/social/og-dmd.jpg">
+  <meta name="twitter:image:alt" content="Dashboard Groq - DMD · DMD Digital Mijma Dreams">
+  <style>
+    body {
+      background:#f7f4ed;
+      color:#1c1c1c;
+      font-family:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    h1 {
+      font-size: 2.5em;
+      background:linear-gradient(135deg,#ff8a4c,#f0467f 55%,#4f7dff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin: 0 0 10px;
+    }
+
+    .subtitle {
+      color:#5f5f5d;
+      font-size: 1.1em;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background:#fcfbf8;
+      backdrop-filter: blur(10px);
+      border:1px solid rgba(28,28,28,.08);
+      border-radius: 12px;
+      padding: 25px;
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      background:#ffffff;
+      border-color:rgba(28,28,28,.14);
+      transform: translateY(-5px);
+    }
+
+    .card-title {
+      font-size: 0.9em;
+      color:#5f5f5d;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+
+    .card-value {
+      font-size: 1.8em;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 8px;
+      animation: pulse 2s infinite;
+    }
+
+    .status-indicator.online {
+      background-color: #10b981;
+    }
+
+    .status-indicator.offline {
+      background-color: #ef4444;
+      animation: none;
+    }
+
+    .status-indicator.loading {
+      background-color: #f59e0b;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .info-box {
+      background: rgba(16, 185, 129, 0.1);
+      border-left: 4px solid #10b981;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .warning-box {
+      background: rgba(239, 68, 68, 0.1);
+      border-left: 4px solid #ef4444;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 9999px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.95em;
+    }
+
+    .btn-primary {
+      background:#1c1c1c;
+      color:#fcfbf8;
+    }
+
+    .btn-primary:hover {
+      transform:none;
+      box-shadow:none;
+    }
+
+    .btn-secondary {
+      background:#fcfbf8;
+      color:#1c1c1c;
+      border:1px solid rgba(28,28,28,.14);
+    }
+
+    .btn-secondary:hover {
+      background:#ffffff;
+    }
+
+    .code-block {
+      background:#f1eee6;
+      border:1px solid rgba(28,28,28,.08);
+      border-radius: 12px;
+      padding: 15px;
+      overflow-x: auto;
+      margin: 15px 0;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 0.9em;
+      line-height: 1.5;
+    }
+
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .section-title {
+      font-size: 1.5em;
+      color:#1c1c1c;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom:1px solid rgba(28,28,28,.14);
+    }
+
+    .feature-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .feature-list li {
+      padding: 10px 0;
+      border-bottom:1px solid rgba(28,28,28,.08);
+      display: flex;
+      align-items: center;
+    }
+
+    .feature-list li:last-child {
+      border-bottom: none;
+    }
+
+    .feature-list li::before {
+      content: "✓";
+      color: #10b981;
+      font-weight: bold;
+      margin-right: 12px;
+      font-size: 1.2em;
+    }
+
+    #testOutput {
+      background:#1c1c1c; color:#fcfbf8;
+      border:1px solid rgba(28,28,28,.08);
+      border-radius: 12px;
+      padding: 15px;
+      min-height: 100px;
+      max-height: 400px;
+      overflow-y: auto;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 0.9em;
+      line-height: 1.5;
+      display: none;
+      margin-top: 15px;
+    }
+
+    #testOutput.visible {
+      display: block;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .logo svg {
+      width: 40px;
+      height: 40px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="logo">
+        <svg viewBox="0 0 100 100" width="60" height="60">
+          <defs>
+            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#ff8a4c;stop-opacity:1" />
+              <stop offset="50%" style="stop-color:#f0467f;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#4f7dff;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <rect x="15" y="15" width="32" height="32" rx="8" fill="#ff8a4c"/>
+          <rect x="53" y="15" width="32" height="32" rx="8" fill="#f0467f"/>
+          <rect x="15" y="53" width="32" height="32" rx="8" fill="#4f7dff"/>
+          <rect x="53" y="53" width="32" height="32" rx="8" fill="#1c1c1c"/>
+          <path d="M50 44 L56 50 L50 56 L44 50 Z" fill="#fff"/>
+        </svg>
+      </div>
+      <h1>Dashboard Groq</h1>
+      <p class="subtitle">Estado de la integración de IA en tiempo real</p>
+    </header>
+
+    <!-- Status Cards -->
+    <div class="grid">
+      <div class="card">
+        <div class="card-title">🖥️ Servidor</div>
+        <div class="card-value">
+          <span class="status-indicator loading" id="serverStatus"></span>
+          <span id="serverText">Verificando...</span>
+        </div>
+        <small id="serverUrl" style="color:#5f5f5d;"></small>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🤖 Groq API</div>
+        <div class="card-value">
+          <span class="status-indicator loading" id="groqStatus"></span>
+          <span id="groqText">Verificando...</span>
+        </div>
+        <small id="groqModel" style="color:#5f5f5d;"></small>
+      </div>
+
+      <div class="card">
+        <div class="card-title">⚡ Performance</div>
+        <div class="card-value" id="latency">--ms</div>
+        <small id="latencyText" style="color:#5f5f5d;">Tiempo de respuesta</small>
+      </div>
+    </div>
+
+    <!-- Info Box -->
+    <div class="info-box" id="infoBox">
+      ℹ️ Verificando estado del servidor...
+    </div>
+
+    <!-- Warning Box -->
+    <div class="warning-box" id="warningBox" style="display: none;">
+      ⚠️ <span id="warningText"></span>
+    </div>
+
+    <!-- Quick Links Section -->
+    <div class="section">
+      <h2 class="section-title">🔗 Enlaces Rápidos</h2>
+      <div class="button-group">
+        <a href="app.html" style="text-decoration: none;">
+          <button class="btn-primary">📝 Builder</button>
+        </a>
+        <a href="index.html" style="text-decoration: none;">
+          <button class="btn-primary">🏠 Landing</button>
+        </a>
+        <button class="btn-secondary" onclick="testServer()">🧪 Test Servidor</button>
+        <button class="btn-secondary" onclick="testGroq()">🤖 Test Groq</button>
+      </div>
+    </div>
+
+    <!-- Test Output -->
+    <div id="testOutput"></div>
+
+    <!-- Features Section -->
+    <div class="section">
+      <h2 class="section-title">✨ Características</h2>
+      <ul class="feature-list">
+        <li>Generación de páginas web en tiempo real con IA</li>
+        <li>Backend seguro - API key no expuesta al navegador</li>
+        <li>Fallback local automático si Groq falla</li>
+        <li>Diseño tipo Lovable con gradientes y glassmorphism</li>
+        <li>Procesamiento de prompts en español</li>
+        <li>Generación de HTML/CSS/JS válido</li>
+      </ul>
+    </div>
+
+    <!-- Configuration Section -->
+    <div class="section">
+      <h2 class="section-title">⚙️ Configuración</h2>
+      <p>Tu API key de Groq está segura en el servidor (.env), nunca se expone al navegador.</p>
+      <div class="code-block">
+GROQ_API_KEY=gsk_tu_clave_aqui
+PORT=3000
+NODE_ENV=development
+      </div>
+      <p><strong>Para cambiar la clave:</strong></p>
+      <ol>
+        <li>Obtén una nueva clave en <a href="https://console.groq.com" target="_blank" style="color:#4f7dff;">console.groq.com</a></li>
+        <li>Edita el archivo <code>.env</code></li>
+        <li>Reinicia: <code>npm start</code></li>
+      </ol>
+    </div>
+
+    <!-- Usage Section -->
+    <div class="section">
+      <h2 class="section-title">🎮 Cómo Usar</h2>
+      <ol>
+        <li>Abre el <a href="app.html" style="color:#4f7dff;">Builder</a></li>
+        <li>Escribe un prompt: <em>"Landing de cafetería con tema oscuro"</em></li>
+        <li>¡La IA generará la página automáticamente!</li>
+        <li>Ajusta en tiempo real con nuevos prompts</li>
+        <li>Descarga o comparte el resultado</li>
+      </ol>
+    </div>
+
+    <!-- Footer -->
+    <footer style="text-align: center; color:#5f5f5d; margin-top: 60px; padding-top: 20px; border-top:1px solid rgba(28,28,28,.14);">
+      <p>🚀 Clon-Web v1.0 | Impulsado por Groq AI | <a href="https://console.groq.com" target="_blank" style="color:#4f7dff;">Obtén API Key</a></p>
+    </footer>
+  </div>
+
+  <script>
+    // En local usa el Express de `npm start` (:3000); en producción las
+    // funciones serverless viven en el mismo origen (URL relativa).
+    const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:3000' : '';
+
+    async function checkStatus() {
+      try {
+        // Test server health
+        const healthRes = await fetch(`${API_BASE}/api/health`);
+        const health = await healthRes.json();
+
+        updateServerStatus(true);
+
+        // Try to generate a simple spec to test Groq
+        testGroqEndpoint();
+      } catch (error) {
+        updateServerStatus(false, error.message);
+      }
+    }
+
+    async function testGroqEndpoint() {
+      try {
+        const startTime = performance.now();
+        const res = await fetch(`${API_BASE}/api/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: 'test',
+            previousSpec: null
+          })
+        });
+        const endTime = performance.now();
+        const latency = Math.round(endTime - startTime);
+
+        if (res.ok) {
+          updateGroqStatus(true, latency);
+        } else {
+          const error = await res.json();
+          updateGroqStatus(false, error.error);
+        }
+      } catch (error) {
+        // Si falla, probablemente sea porque falta API key o Groq está down
+        const isKeyIssue = error.message.includes('API key');
+        updateGroqStatus(false, isKeyIssue ? 'API Key no configurada' : error.message);
+      }
+    }
+
+    function updateServerStatus(online, error = null) {
+      const indicator = document.getElementById('serverStatus');
+      const text = document.getElementById('serverText');
+      const url = document.getElementById('serverUrl');
+      const infoBox = document.getElementById('infoBox');
+
+      if (online) {
+        indicator.classList.add('online');
+        indicator.classList.remove('loading', 'offline');
+        text.textContent = 'En línea';
+        url.textContent = API_BASE;
+        infoBox.textContent = '✅ Servidor activo y listo para generar páginas';
+        infoBox.style.background = 'rgba(16, 185, 129, 0.1)';
+        infoBox.style.borderLeftColor = '#10b981';
+      } else {
+        indicator.classList.add('offline');
+        indicator.classList.remove('loading', 'online');
+        text.textContent = 'Offline';
+        url.textContent = `Error: ${error}`;
+        infoBox.innerHTML = `❌ El servidor no está disponible<br><small>${error}</small>`;
+        infoBox.style.background = 'rgba(239, 68, 68, 0.1)';
+        infoBox.style.borderLeftColor = '#ef4444';
+
+        const warning = document.getElementById('warningBox');
+        warning.style.display = 'block';
+        document.getElementById('warningText').textContent = 'Ejecuta "npm start" en la terminal';
+      }
+    }
+
+    function updateGroqStatus(online, latencyOrError) {
+      const indicator = document.getElementById('groqStatus');
+      const text = document.getElementById('groqText');
+      const model = document.getElementById('groqModel');
+      const latencyEl = document.getElementById('latency');
+
+      if (online && typeof latencyOrError === 'number') {
+        indicator.classList.add('online');
+        indicator.classList.remove('loading', 'offline');
+        text.textContent = 'Conectado';
+        model.textContent = `Latencia: ${latencyOrError}ms | Modelo: mixtral-8x7b`;
+        latencyEl.textContent = `${latencyOrError}ms`;
+      } else {
+        indicator.classList.add('offline');
+        indicator.classList.remove('loading', 'online');
+        text.textContent = 'No disponible';
+        model.textContent = latencyOrError || 'Verifica API Key';
+      }
+    }
+
+    async function testServer() {
+      const output = document.getElementById('testOutput');
+      output.classList.add('visible');
+      output.innerHTML = '⏳ Testando servidor...\n';
+
+      try {
+        const res = await fetch(`${API_BASE}/api/health`);
+        output.innerHTML += `✅ Health check: ${res.status} OK\n`;
+
+        const data = await res.json();
+        output.innerHTML += `<br>📊 Respuesta:\n${JSON.stringify(data, null, 2)}`;
+      } catch (error) {
+        output.innerHTML += `❌ Error: ${error.message}`;
+      }
+    }
+
+    async function testGroq() {
+      const output = document.getElementById('testOutput');
+      output.classList.add('visible');
+      output.innerHTML = '⏳ Enviando request a Groq...\n';
+
+      try {
+        const startTime = performance.now();
+        const res = await fetch(`${API_BASE}/api/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: 'Una página de landing para vender café',
+            previousSpec: null
+          })
+        });
+        const endTime = performance.now();
+
+        output.innerHTML += `✅ Respuesta en ${Math.round(endTime - startTime)}ms\n<br>`;
+
+        if (res.ok) {
+          const data = await res.json();
+          output.innerHTML += `📄 Tipo: ${data.spec.type}\n`;
+          output.innerHTML += `📌 Título: ${data.spec.title}\n`;
+          output.innerHTML += `🎯 Secciones: ${data.spec.sections?.length || 0}\n`;
+          output.innerHTML += `🤖 Modelo: ${data.model}\n\n`;
+          output.innerHTML += `<strong>Spec completo:</strong>\n${JSON.stringify(data.spec, null, 2)}`;
+        } else {
+          const error = await res.json();
+          output.innerHTML += `❌ Error: ${error.error}`;
+        }
+      } catch (error) {
+        output.innerHTML += `❌ Error: ${error.message}`;
+      }
+    }
+
+    // Check status on load
+    window.addEventListener('load', checkStatus);
+
+    // Auto-refresh every 30 seconds
+    setInterval(checkStatus, 30000);
+  </script>
+
+</body>
+</html>
