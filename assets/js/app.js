@@ -752,7 +752,11 @@
     var lo = $('accLogout');
     if (lo) lo.hidden = !u;
     var promoBox = $('accPromoBox');
-    if (promoBox) promoBox.style.display = u ? '' : 'none';
+    if (promoBox) promoBox.style.display = '';
+    if (!u) {
+      var ps0 = $('accPromoStatus');
+      if (ps0) ps0.textContent = 'Primero regístrate o inicia sesión para usar tu código.';
+    }
     var submit = $('accSubmit');
     if (submit) {
       submit.textContent = accMode === 'register' ? 'Registrarme' : 'Iniciar sesión';
