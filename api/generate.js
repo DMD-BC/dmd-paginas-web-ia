@@ -167,7 +167,7 @@ module.exports = async function handler(req, res) {
         success: true,
         data: out.data,
         model: out.model,
-        web: web ? { query: web.query, facts: web.facts, images: web.images } : null
+        web: web ? { query: web.query, facts: web.facts, images: web.images, sites: web.sites || [] } : null
       });
     }
 
@@ -196,7 +196,7 @@ module.exports = async function handler(req, res) {
       spec: result.spec,
       model: result.model,
       plan: result.plan,
-      web: web ? { query: web.query, facts: web.facts, images: web.images } : null
+      web: web ? { query: web.query, facts: web.facts, images: web.images, sites: web.sites || [] } : null
     });
   } catch (error) {
     clearTimeout(timer);

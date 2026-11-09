@@ -152,6 +152,37 @@ window.LLM = (function() {
     return ok;
   }
 
+  // ---- Fuera de alcance del builder ----
+  // El builder genera páginas estáticas (landing, catálogo, portafolio).
+  // NO puede hacer tiendas con pagos, sistemas con usuarios, bases de
+  // datos ni apps nativas. Detectarlo ANTES de generar evita gastar
+  // cupo de IA y cambios del usuario en algo que no se puede entregar.
+  // La lista vive aquí para poder probarla en Node; app.js la usa.
+  var OUT_OF_SCOPE_PATTERNS = [
+    /carrito\s*(de\s*compras?)?|checkout|pasarela\s+de\s+pagos?/i,
+    /pagos?\s+en\s+l[ií]nea|pagar\s+en\s+l[ií]nea|cobro\s+en\s+l[ií]nea|pago\s+con\s+tarjeta/i,
+    /stripe|paypal|mercado\s*pago|openpay|conekta/i,
+    /tienda\s+.*\bcon\s+pagos?\b|e-?commerce\s+con\s+pagos?/i,
+    /base\s+de\s+datos|database|sql|mongodb|firebase/i,
+    /panel\s+de\s+administra|administraci[oó]n\s+de\s+usuarios|admin\s+panel/i,
+    /login\s+de\s+usuarios|registro\s+de\s+usuarios|inicio\s+de\s+sesion\s+de\s+usuarios|cuentas\s+de\s+usuario|autenticaci[oó]n\s+de\s+usuarios/i,
+    /app\s+m[oó]vil\s+nativa|aplicaci[oó]n\s+nativa|\bapk\b|app\s+para\s+(android|ios|iphone)/i,
+    /reservas?\s+con\s+cobro|reservar\s+y\s+pagar/i,
+    /suscripci[oó]n\s+con\s+cobro|cobrar\s+suscripc/i
+  ];
+  var OUT_OF_SCOPE_MESSAGE =
+    'La IA de DMD no puede hacer tal cosa. Te recomiendo que descargues ' +
+    'tus archivos y lo hagas con ayuda de otra IA.';
+  function isOutOfScope(prompt) {
+    var p = String(prompt || '');
+    return OUT_OF_SCOPE_PATTERNS.some(function (re) { return re.test(p); });
+  }
+  window.DMDOutOfScope = {
+    patterns: OUT_OF_SCOPE_PATTERNS,
+    message: OUT_OF_SCOPE_MESSAGE,
+    isOutOfScope: isOutOfScope
+  };
+
   // Auto-inicializar cuando el script carga
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initialize);

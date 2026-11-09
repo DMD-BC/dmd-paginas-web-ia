@@ -99,6 +99,11 @@ REGLAS DURAS (si las rompes, la página sale mal):
 9. Si el mensaje incluye "DATOS REALES ENCONTRADOS EN LA WEB", USA esos datos
    (platos, servicios, precios típicos, historia del giro) en el contenido
    en vez de inventarlos; no contradigas esos datos.
+10. Si el mensaje incluye "PÁGINAS WEB REALES DE ESTE GIRO", toma su
+    ESTRUCTURA como referencia (qué secciones tienen, en qué orden y qué
+    ofrece cada una) para que tu página esté al nivel de una página real
+    viable, con secciones y contenido al nivel de esas referencias; NUNCA
+    copies sus textos, marcas, imágenes ni precios.
 
 EJEMPLO de nivel esperado (para "una página de una pizzería"):
 {

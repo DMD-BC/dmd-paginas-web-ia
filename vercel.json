@@ -1,1 +1,31 @@
-{"functions":{"api/generate.js":{"maxDuration":60},"api/publish.js":{"maxDuration":30}}}
+{
+  "functions": {
+    "api/generate.js": {
+      "maxDuration": 60
+    },
+    "api/publish.js": {
+      "maxDuration": 30
+    },
+    "api/auth/register.js": {
+      "maxDuration": 30
+    },
+    "api/auth/login.js": {
+      "maxDuration": 30
+    },
+    "api/auth/me.js": {
+      "maxDuration": 30
+    },
+    "api/auth/logout.js": {
+      "maxDuration": 30
+    },
+    "api/auth/promo.js": {
+      "maxDuration": 30
+    },
+    "api/usage.js": {
+      "maxDuration": 30
+    },
+    "api/projects.js": {
+      "maxDuration": 30
+    }
+  }
+}

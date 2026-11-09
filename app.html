@@ -219,6 +219,33 @@ button{font:inherit;cursor:pointer;color:inherit}
 .tl__m{color:var(--muted);font-size:12px;margin-top:2px;word-break:break-word}
 .tl__time{color:var(--muted);font-size:11px}
 
+/* ---------- tarjeta de resultado (móvil tipo chat con IA) ---------- */
+.result-card{margin-top:10px;border-radius:14px;background:var(--paper);box-shadow:0 0 0 1px var(--line);overflow:hidden}
+.result-thumb{position:relative;height:180px;overflow:hidden;cursor:pointer;background:var(--cream-2)}
+.result-thumb iframe{width:100%;height:100%;border:0;pointer-events:none;background:#fff}
+.result-thumb__tap{position:absolute;left:10px;bottom:10px;padding:5px 10px;border-radius:9999px;background:rgba(28,28,28,.85);color:#fff;font-size:12px;font-weight:500}
+.result-summary{padding:12px 14px 4px;font-size:13.5px;color:var(--fg-82)}
+.result-actions{display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px 14px}
+/* ---------- modal de vista previa a pantalla casi completa ---------- */
+.preview-modal{position:fixed;inset:0;z-index:300;display:flex;flex-direction:column;background:var(--cream)}
+.preview-modal[hidden]{display:none}
+.preview-modal__head{flex:none;display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--cream)}
+.preview-modal__head h3{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:16px}
+.preview-modal__tabs{display:flex;gap:4px}
+.preview-modal__body{flex:1;min-height:0;position:relative}
+.preview-modal__body iframe{width:100%;height:100%;border:0;background:#fff}
+.preview-modal__body pre{margin:0;height:100%;overflow:auto;padding:16px;font-size:12.5px;line-height:1.6;white-space:pre;background:var(--paper)}
+.preview-modal__body pre[hidden]{display:none}
+.preview-modal__body iframe[hidden]{display:none}
+/* ---------- etiqueta del botón Adjuntar (visible en móvil) ---------- */
+.attach-label{display:none;font-size:13px;font-weight:500}
+.composer__meta{display:flex;justify-content:space-between;gap:8px;font-size:12px}
+@media(max-width:1100px){
+  .attach-btn{width:auto!important;padding:0 12px!important}
+  .attach-label{display:inline}
+  #usagePill{display:none}
+}
+
 /* ---------- modal ---------- */
 .modal{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:var(--s-4);background:rgba(28,28,28,.36)}
 .modal[hidden]{display:none}
@@ -317,6 +344,8 @@ button{font:inherit;cursor:pointer;color:inherit}
     <button class="btn btn--ghost" id="aiBtn" title="Configurar IA real"><span class="ai-dot" id="aiDot"></span><span class="ai-label">IA</span></button>
     <a class="btn btn--ghost" href="editor-ia.html">Editor IA</a>
     <button class="btn btn--ghost" id="shareBtn">Compartir</button>
+    <span class="project__badge" id="usagePill" title="Cambios que te quedan">Te quedan 3 cambios</span>
+    <button class="btn btn--ghost" id="accountBtn" title="Mi cuenta">👤 <span id="accountLabel">Cuenta</span></button>
     <button class="btn btn--primary" id="publishBtn">Publicar</button>
   </div>
 </header>
@@ -373,10 +402,10 @@ button{font:inherit;cursor:pointer;color:inherit}
       <input type="file" id="attachFile" accept=".html,.htm,.zip" hidden>
       <div class="attach-chips" id="attachChips"></div>
       <textarea id="prompt" class="composer__input" rows="2" maxlength="2000" placeholder="Pide un cambio o describe tu app…"></textarea>
-      <div class="composer__meta"><span id="promptCount" class="muted">0 / 2000 caracteres</span></div>
+      <div class="composer__meta"><span id="usageText" class="muted">Te quedan 3 cambios</span><span id="promptCount" class="muted">0 / 2000 caracteres</span></div>
       <div class="composer__bar">
         <div class="composer__send">
-          <button type="button" class="btn btn--icon attach-btn" title="Adjuntar foto, logo o archivo" id="attachBtn" aria-label="Adjuntar">+</button>
+          <button type="button" class="btn btn--icon attach-btn" title="Adjuntar foto, logo o archivo" id="attachBtn" aria-label="Adjuntar">+ <span class="attach-label">Adjuntar</span></button>
           <button type="button" class="btn btn--icon" title="Sugerencias" id="chipsBtn" aria-label="Sugerencias">✦</button>
           <button type="submit" class="btn btn--primary" id="sendBtn">Construir <span>↑</span></button>
         </div>
@@ -403,6 +432,7 @@ button{font:inherit;cursor:pointer;color:inherit}
           <button class="dev" data-w="820px" title="Tablet">▭</button>
           <button class="dev" data-w="390px" title="Móvil">▯</button>
         </div>
+        <button class="btn btn--icon" id="downloadZipBtn" title="Descargar mis archivos (.zip)" aria-label="Descargar .zip">⬇</button>
         <button class="btn btn--icon" id="refreshBtn" title="Recargar preview" aria-label="Recargar">⟳</button>
         <button class="btn btn--icon" id="openBtn" title="Abrir en pestaña" aria-label="Abrir">↗</button>
       </div>
@@ -505,12 +535,90 @@ button{font:inherit;cursor:pointer;color:inherit}
   </div>
 </div>
 
+
+<!-- ================= MODAL: MI CUENTA (límites y código promocional) ================= -->
+<!-- Cuenta LOCAL de este navegador: no hay base de datos en el servidor.
+     Sin registrarse: 3 cambios. Registrado: 25. Con código DMDMX: 50. -->
+<div class="modal" id="accountModal" hidden>
+  <div class="modal__box" role="dialog" aria-modal="true" aria-labelledby="accTitle">
+    <header class="modal__head">
+      <h3 id="accTitle">Mi cuenta</h3>
+      <button class="btn btn--icon" id="accClose" aria-label="Cerrar">×</button>
+    </header>
+    <p class="muted modal__lead" id="accUsage">Te quedan 3 cambios gratis.</p>
+    <p class="muted modal__note" id="accDbNote">Revisando si las cuentas del servidor están conectadas…</p>
+    <p class="muted modal__lead" id="accLogged" hidden></p>
+    <div id="accForm">
+      <label class="field" id="accNameField">
+        <span>Nombre</span>
+        <input id="accName" type="text" autocomplete="name" placeholder="Tu nombre" />
+      </label>
+      <label class="field">
+        <span>Correo</span>
+        <input id="accEmail" type="email" autocomplete="email" placeholder="tu@correo.com" />
+      </label>
+      <label class="field">
+        <span>Contraseña</span>
+        <input id="accPass" type="password" autocomplete="current-password" placeholder="Mínimo 4 caracteres" />
+      </label>
+      <footer class="modal__foot">
+        <span class="modal__status muted" id="accStatus"></span>
+        <div class="modal__actions">
+          <button class="btn btn--primary" id="accSubmit">Registrarme</button>
+        </div>
+      </footer>
+      <p class="muted modal__note"><button type="button" class="btn btn--ghost" id="accToggle">¿Ya tienes cuenta? Inicia sesión</button></p>
+    </div>
+    <div id="accPromoBox">
+      <label class="field">
+        <span>Código promocional</span>
+        <input id="accPromo" type="text" autocomplete="off" placeholder="Ej. DMDMX" />
+      </label>
+      <footer class="modal__foot">
+        <span class="modal__status muted" id="accPromoStatus">Con DMDMX tu límite sube a 50 cambios.</span>
+        <div class="modal__actions">
+          <button class="btn btn--outline" id="accPromoBtn">Aplicar código</button>
+        </div>
+      </footer>
+    </div>
+    <p class="muted modal__note">Tu cuenta y tus proyectos se guardan en la base de datos del
+      servidor (Postgres), no solo en este navegador: al iniciar sesión en
+      otro dispositivo verás tus páginas. Tu contraseña se guarda solo
+      como hash con scrypt en el servidor, nunca en texto claro ni en el
+      navegador. Sin sesión, tus 3 cambios gratis y tus proyectos se
+      guardan solo en este navegador.</p>
+    <footer class="modal__foot">
+      <span></span>
+      <div class="modal__actions">
+        <button class="btn btn--outline" id="accLogout" hidden>Cerrar sesión</button>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<!-- ================= MODAL: VISTA PREVIA GRANDE (móvil tipo chat) ================= -->
+<div class="preview-modal" id="previewModal" hidden>
+  <div class="preview-modal__head">
+    <h3 id="previewModalTitle">Tu página</h3>
+    <div class="preview-modal__tabs">
+      <button class="tab is-on" data-bview="preview" type="button">Vista previa</button>
+      <button class="tab" data-bview="code" type="button">Código</button>
+    </div>
+    <button class="btn btn--icon" id="previewModalClose" aria-label="Cerrar">×</button>
+  </div>
+  <div class="preview-modal__body">
+    <iframe id="bigPreview" title="Vista previa grande" sandbox="allow-scripts allow-forms allow-modals allow-popups"></iframe>
+    <pre id="bigCode" hidden><code id="bigCodeText"></code></pre>
+  </div>
+</div>
+
 <script src="assets/js/trajectory.js"></script>
 <script src="assets/js/business-types.js"></script>
 <script src="assets/js/image-catalog.js"></script>
 <script src="assets/js/generator.js"></script>
 <script src="assets/js/api-client.js"></script>
 <script src="assets/js/llm.js"></script>
+<script src="assets/js/usage.js"></script>
 <script src="assets/js/app.js"></script>
 <script>
 /* Plantillas: ?example=<slug> carga un ejemplo ya construido (sin Groq ni

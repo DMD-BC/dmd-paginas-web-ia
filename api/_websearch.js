@@ -35,6 +35,11 @@ function cleanText(t) {
 
 // Saca el tema de búsqueda del prompt del usuario:
 // "crea una pagina de una taqueria en Ixtlahuaca" -> "taqueria"
+// "quiero una página para mi papelería con precios y contacto" -> "papelería"
+// M8 (2026-11-08): el viejo deriveQuery dejaba "mi papelería papelería
+// el lápiz en" y Bing buscaba "mi" (Xiaomi, Michigan). Ahora se quitan
+// el "mi", los rellenos ("con precios y contacto", "servicios"…) y el
+// lugar, y quedan como máximo las 3 primeras palabras del giro.
 function deriveQuery(prompt) {
   let q = String(prompt || '').toLowerCase();
   q = q
@@ -46,8 +51,14 @@ function deriveQuery(prompt) {
     .trim();
   // Quita lugar al final ("en Ixtlahuaca", "en CDMX") para buscar el giro.
   q = q.replace(/\s+en\s+[a-záéíóúñ\s]+$/i, '').trim();
-  // Máximo 6 palabras, sin puntuación.
-  q = q.replace(/[^\wáéíóúñ\s]/gi, '').split(/\s+/).slice(0, 6).join(' ').trim();
+  // Quita rellenos que no son el giro: "con precios y contacto",
+  // "con servicios", "con menú", "con catálogo y pedidos"…
+  q = q.replace(/[^\wáéíóúñ\s]/gi, ' ');
+  const STOP = new Set(['mi', 'mis', 'con', 'y', 'para', 'de', 'una', 'un', 'el', 'la',
+    'los', 'las', 'precios', 'precio', 'contacto', 'servicios', 'servicio',
+    'menu', 'menú', 'catalogo', 'catálogo', 'pedidos', 'negocio', 'empresa',
+    'testimonios', 'testimonio', 'landing']);
+  q = q.split(/\s+/).filter((w) => w && !STOP.has(w)).slice(0, 3).join(' ').trim();
   return q || 'negocio';
 }
 
@@ -117,30 +128,144 @@ async function webImages(query) {
   }
 }
 
+async function fetchText(url, timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs || FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { headers: UA, signal: controller.signal });
+    if (!res.ok) return null;
+    return await res.text();
+  } catch (e) {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// DuckDuckGo HTML (sin clave): "<giro> página web" y "<giro> website".
+// Devuelve los primeros resultados (título, snippet, URL). En la práctica
+// el HTML de DDG a veces viene vacío o bloqueado desde serverless, así
+// que esto es un intento honesto, no la única fuente.
+async function duckReferenceSites(query) {
+  const out = [];
+  const queries = [query + ' página web', query + ' website'];
+  for (const q of queries) {
+    try {
+      const html = await fetchText(
+        'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(q), 4000);
+      if (!html) continue;
+      // <a class="result__a" href="URL">Título</a> + result__snippet
+      const linkRe = /<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]{1,200}?)<\/a>/gi;
+      let m;
+      while ((m = linkRe.exec(html)) && out.length < 4) {
+        let url = cleanText(m[1]);
+        try { url = decodeURIComponent(url); } catch (e) {}
+        if (!/^https?:\/\//.test(url)) continue;
+        const title = cleanText(m[2].replace(/<[^>]+>/g, '')).slice(0, 90);
+        if (title && !out.some((s) => s.url === url)) {
+          out.push({ title, url, snippet: '', source: 'DuckDuckGo' });
+        }
+      }
+      if (out.length >= 3) break;
+    } catch (e) { /* siguiente fuente */ }
+  }
+  // DDG Instant Answer: RelatedTopics trae FirstURL + Text.
+  try {
+    const data = await fetchJson(
+      'https://api.duckduckgo.com/?q=' + encodeURIComponent(query + ' página web') +
+      '&format=json&no_html=1&skip_disambig=1');
+    const topics = (data && data.RelatedTopics) || [];
+    for (const t of topics) {
+      const sub = t && t.Topics ? t.Topics : [t];
+      for (const s of sub) {
+        if (s && s.FirstURL && s.Text && !out.some((x) => x.url === s.FirstURL)) {
+          out.push({ title: cleanText(s.Text).slice(0, 90), url: s.FirstURL,
+            snippet: cleanText(s.Text).slice(0, 200), source: 'DuckDuckGo' });
+        }
+        if (out.length >= 4) break;
+      }
+      if (out.length >= 4) break;
+    }
+  } catch (e) { /* sin DDG, sin sitios de DDG */ }
+  return out;
+}
+
+// Bing RSS (sin clave): el respaldo fiable cuando DDG no devuelve nada
+// parseable desde el servidor. Mismo tipo de resultado: título, URL,
+// descripción del sitio real.
+async function bingReferenceSites(query) {
+  try {
+    const xml = await fetchText(
+      'https://www.bing.com/search?q=' + encodeURIComponent(query + ' pagina web') +
+      '&format=rss', 4000);
+    if (!xml) return [];
+    const out = [];
+    const itemRe = /<item>([\s\S]*?)<\/item>/gi;
+    let m;
+    while ((m = itemRe.exec(xml)) && out.length < 4) {
+      const body = m[1];
+      const title = cleanText(((body.match(/<title>([\s\S]*?)<\/title>/i) || [])[1] || '')
+        .replace(/<!\[CDATA\[|\]\]>/g, '')).slice(0, 90);
+      const url = cleanText(((body.match(/<link>([\s\S]*?)<\/link>/i) || [])[1] || '')
+        .replace(/<!\[CDATA\[|\]\]>/g, ''));
+      const desc = cleanText(((body.match(/<description>([\s\S]*?)<\/description>/i) || [])[1] || '')
+        .replace(/<!\[CDATA\[|\]\]>/g, '')).slice(0, 200);
+      if (/^https?:\/\//.test(url) && title && !out.some((s) => s.url === url)) {
+        out.push({ title, url, snippet: desc, source: 'Bing' });
+      }
+    }
+    return out;
+  } catch (e) {
+    return [];
+  }
+}
+
+// Sitios reales de referencia del giro: DDG primero (lo pedido), Bing
+// como respaldo fiable. Nunca lanza; si todo falla, devuelve [] y la
+// generación sigue solo con Groq.
+async function referenceSites(query) {
+  const [ddg, bing] = await Promise.all([
+    duckReferenceSites(query),
+    bingReferenceSites(query)
+  ]);
+  const merged = [];
+  [...ddg, ...bing].forEach((s) => {
+    if (s && s.url && !merged.some((x) => x.url === s.url)) merged.push(s);
+  });
+  return merged.slice(0, 4);
+}
+
 // Búsqueda completa para un prompt de usuario. Nunca lanza.
 // NOTA: Openverse se probó pero es demasiado lento (>8 s por consulta
 // desde el servidor) y no fiable; las imágenes siguen con el catálogo
 // curado de Unsplash (fotos reales verificadas), no con Openverse.
+// "sites": páginas web reales del giro (referencia estructural para
+// que la página generada esté al nivel de una página real viable).
 async function searchWeb(prompt) {
   const query = deriveQuery(prompt);
-  const [wiki, duck] = await Promise.all([
+  const [wiki, duck, sites] = await Promise.all([
     wikipediaFacts(query),
-    duckFacts(query)
+    duckFacts(query),
+    referenceSites(query)
   ]);
   const facts = [...wiki, ...duck].slice(0, 3);
-  return { query, facts, images: [] };
+  return { query, facts, images: [], sites };
 }
 
 // Bloque de texto para meter en el prompt de Groq.
 function webContextBlock(web) {
-  if (!web || (!web.facts.length && !web.images.length)) return '';
+  if (!web || (!web.facts.length && !web.images.length && !(web.sites && web.sites.length))) return '';
   const lines = ['DATOS REALES ENCONTRADOS EN LA WEB (úsalos, no los contradigas; si un dato no aplica al negocio, ignóralo):'];
   web.facts.forEach((f) => lines.push('- [' + f.source + '] ' + f.text));
   if (web.images.length) {
     lines.push('FOTOS REALES ENCONTRADAS EN LA WEB (Openverse, licencia CC) para inspirar las palabras clave de imagen:');
     web.images.slice(0, 4).forEach((im) => lines.push('- "' + im.title + '" (' + im.license + ')'));
   }
+  if (web.sites && web.sites.length) {
+    lines.push('PÁGINAS WEB REALES DE ESTE GIRO (referencia estructural: toma su ESTRUCTURA — qué secciones tienen, en qué orden y qué ofrece cada una — como guía para que tu página esté al nivel de una página real viable; NO copies sus textos, imágenes, marcas ni precios):');
+    web.sites.forEach((s) => lines.push('- "' + s.title + '" — ' + s.url + (s.snippet ? ' — ' + s.snippet : '')));
+  }
   return lines.join('\n');
 }
 
-module.exports = { searchWeb, webContextBlock, deriveQuery, wikipediaFacts, duckFacts, webImages };
+module.exports = { searchWeb, webContextBlock, deriveQuery, wikipediaFacts, duckFacts, webImages, referenceSites, duckReferenceSites, bingReferenceSites };

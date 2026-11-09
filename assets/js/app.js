@@ -443,8 +443,9 @@
     saveProject();
     tlAdd('Preview actualizado — ' + (source || 'generador'), 'tl--tool');
     if (window.Trajectory) window.Trajectory.log('render', spec.title || state.name, source || '');
-    // En móvil, tras generar, cambiar automáticamente a la vista previa.
-    if (isMobileView()) setMobileView('stage');
+    // En móvil NO se cambia solo a la vista previa: el resultado se
+    // muestra como tarjeta en el chat (handlePrompt abre el historial)
+    // y la miniatura se amplía con el modal de vista previa.
   }
 
   /* ---------------- proyectos (localStorage) ---------------- */
@@ -468,6 +469,15 @@
       });
       localStorage.setItem(LS_KEY, JSON.stringify(list.slice(0, 20)));
       renderProjects();
+      // Con sesión, el proyecto también se guarda EN LA DB (por usuario).
+      var U2 = window.DMDUsage;
+      if (U2 && U2.state && U2.state.db && U2.currentUser()) {
+        fetch('/api/projects', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slug: state.name, title: state.spec.title || state.name, spec: state.spec, html: state.html, files: state.files || {} })
+        }).catch(function () {});
+      }
     } catch (e) { /* almacenamiento lleno o bloqueado: no es fatal */ }
   }
 
@@ -569,6 +579,250 @@
   // Prompt del último fallo de IA, para el botón "Reintentar con IA".
   var lastAiFailedPrompt = '';
 
+  /* ---------------- contador, tarjeta de resultado, preview grande,
+     descarga ZIP, cuenta y proyectos del servidor ---------------- */
+
+  function updateUsageUI() {
+    var U = window.DMDUsage;
+    if (!U) return;
+    var pill = $('usagePill');
+    if (pill) pill.textContent = 'Te quedan ' + U.remaining() + ' cambios';
+    var ut = $('usageText');
+    if (ut) ut.textContent = U.statusText();
+    var label = $('accountLabel');
+    if (label) {
+      var u = U.currentUser();
+      label.textContent = u ? (u.name || u.email || 'Cuenta') : 'Cuenta';
+    }
+    var au = $('accUsage');
+    if (au) au.textContent = U.statusText();
+  }
+
+  function summaryText() {
+    try { return window.Generator.build(state.spec).summary; }
+    catch (e) { return 'Tu página "' + ((state.spec && state.spec.title) || state.name) + '" está lista.'; }
+  }
+
+  // Tarjeta de resultado (móvil tipo chat con IA): miniatura + resumen.
+  // Va como hermana de .msg__text (no dentro), para que saveChat() no
+  // serialice el srcdoc completo de la página en localStorage.
+  function appendResultCard(agentEl) {
+    if (!agentEl || !state.html) return;
+    var body = agentEl.parentElement;
+    if (!body || body.querySelector('.result-card')) return;
+    var card = document.createElement('div');
+    card.className = 'result-card';
+    card.innerHTML = '<div class="result-thumb" data-open-preview="1"><iframe class="result-thumb-frame" title="Miniatura de tu página" sandbox="allow-scripts"></iframe><span class="result-thumb__tap">🔍 Tocar para ver grande</span></div>' +
+      '<div class="result-summary">' + esc(summaryText()) + '</div>' +
+      '<div class="result-actions"><button type="button" class="btn btn--primary" data-open-preview="1">Ver página completa</button>' +
+      '<button type="button" class="btn btn--outline" data-download-zip="1">⬇ Descargar .zip</button></div>';
+    body.appendChild(card);
+    var fr = card.querySelector('.result-thumb-frame');
+    if (fr) fr.setAttribute('srcdoc', state.html);
+  }
+
+  function openPreviewModal() {
+    var m = $('previewModal');
+    if (!m || !state.html) return;
+    var t = $('previewModalTitle');
+    if (t) t.textContent = (state.spec && state.spec.title) || state.name;
+    var fr = $('bigPreview');
+    if (fr) fr.srcdoc = state.html;
+    var code = $('bigCodeText');
+    if (code) code.textContent = (state.files && state.files['index.html']) || state.html;
+    m.hidden = false;
+  }
+  function closePreviewModal() {
+    var m = $('previewModal');
+    if (m) m.hidden = true;
+  }
+  function initPreviewModal() {
+    var c = $('previewModalClose');
+    if (c) c.addEventListener('click', closePreviewModal);
+    var m = $('previewModal');
+    if (m) m.addEventListener('click', function (e) { if (e.target === m) closePreviewModal(); });
+    document.querySelectorAll('#previewModal [data-bview]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        document.querySelectorAll('#previewModal [data-bview]').forEach(function (x) { x.classList.remove('is-on'); });
+        b.classList.add('is-on');
+        var showCode = b.getAttribute('data-bview') === 'code';
+        var fr = $('bigPreview'), pre = $('bigCode');
+        if (fr) fr.hidden = showCode;
+        if (pre) pre.hidden = !showCode;
+      });
+    });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePreviewModal(); });
+  }
+
+  // Descarga el proyecto actual como .zip (JSZip por CDN): index.html,
+  // styles.css, script.js, fotos/logo subidos y un LEEME. Si aún no hay
+  // página, el ZIP trae solo el LEEME explicándolo.
+  async function downloadProjectZip() {
+    var JSZip;
+    try { JSZip = await loadJSZip(); }
+    catch (e) { addMsg('agent', 'DMD', '⚠️ No pude cargar la herramienta de ZIP (revisa tu conexión).'); return; }
+    try {
+      var zip = new JSZip();
+      if (state.html) {
+        zip.file('index.html', state.html);
+        if (state.files) Object.keys(state.files).forEach(function (f) { if (f !== 'index.html') zip.file(f, state.files[f]); });
+        state.attachments.photos.forEach(function (p, i) {
+          var m = /^data:([^;]+);base64,(.*)$/.exec(p.dataUrl || '');
+          if (m) zip.file('assets/foto-' + (i + 1) + '.jpg', m[2], { base64: true });
+        });
+        if (state.attachments.logo) {
+          var lm = /^data:([^;]+);base64,(.*)$/.exec(state.attachments.logo.dataUrl || '');
+          if (lm) zip.file('assets/logo.png', lm[2], { base64: true });
+        }
+        zip.file('LEEME.txt', 'Página "' + ((state.spec && state.spec.title) || state.name) + '" creada con DMD | paginas web (crear.dmdmx.dev).\nAbre index.html en el navegador. Las fotos de tus productos están en assets/ si las subiste.\n');
+      } else {
+        zip.file('LEEME.txt', 'Aún no hay página generada en este proyecto.\nGenera una página con el builder y vuelve a descargar: el ZIP traerá index.html, styles.css y script.js.\n');
+      }
+      var blob = await zip.generateAsync({ type: 'blob' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = (state.name || 'mi-pagina') + '.zip';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
+      addMsg('agent', 'DMD', '⬇ Descargué tus archivos en .zip (' + esc(a.download) + '). Ábrelo y ahí va index.html con todo lo necesario.');
+    } catch (e) {
+      addMsg('agent', 'DMD', '⚠️ No pude armar el ZIP: ' + esc(e && e.message ? e.message : 'error desconocido'));
+    }
+  }
+
+  // Proyectos del servidor: con sesión, la lista viene de /api/projects.
+  // Cuenta nueva -> vacía. Login -> SUS proyectos de la DB. La lista
+  // anónima/local se guarda aparte y vuelve al cerrar sesión.
+  var ANON_PROJECTS_KEY = 'dmd_projects_anon';
+  function syncServerProjects() {
+    var U = window.DMDUsage;
+    if (!U || !U.state || !U.state.db || !U.currentUser()) return Promise.resolve(false);
+    return fetch('/api/projects', { credentials: 'include' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data || !data.ok || !Array.isArray(data.projects)) return false;
+        try {
+          var current = loadProjects();
+          if (current.length) localStorage.setItem(ANON_PROJECTS_KEY, JSON.stringify(current));
+        } catch (e) {}
+        try { localStorage.setItem(LS_KEY, JSON.stringify(data.projects.slice(0, 20))); } catch (e) {}
+        renderProjects();
+        return true;
+      })
+      .catch(function () { return false; });
+  }
+  function restoreAnonProjects() {
+    try {
+      var raw = localStorage.getItem(ANON_PROJECTS_KEY);
+      if (raw) { localStorage.setItem(LS_KEY, raw); localStorage.removeItem(ANON_PROJECTS_KEY); }
+    } catch (e) {}
+    renderProjects();
+  }
+
+  // Modal Mi cuenta (registro/login en el servidor + código DMDMX).
+  var accMode = 'register';
+  function openAccountModal() {
+    var m = $('accountModal');
+    if (!m) return;
+    refreshAccountModal();
+    m.hidden = false;
+  }
+  function refreshAccountModal() {
+    var U = window.DMDUsage;
+    if (!U) return;
+    var au = $('accUsage');
+    if (au) au.textContent = U.statusText();
+    var dbNote = $('accDbNote');
+    if (dbNote) {
+      var hasDb = !!(U.state && U.state.db);
+      dbNote.textContent = hasDb
+        ? 'Cuentas en el servidor: activas. Tu sesión y tus proyectos se guardan en la base de datos.'
+        : 'Cuentas del servidor aún no conectadas: falta DATABASE_URL en Vercel (base de datos gratis de Supabase o Neon). El registro está desactivado hasta conectarla; mientras tanto usa tus 3 cambios gratis sin registrarte.';
+    }
+    var u = U.currentUser();
+    var logged = $('accLogged');
+    if (logged) {
+      logged.hidden = !u;
+      if (u) logged.textContent = 'Sesión: ' + u.name + ' (' + u.email + ') · cuenta del servidor';
+    }
+    var form = $('accForm');
+    if (form) form.style.display = u ? 'none' : '';
+    var lo = $('accLogout');
+    if (lo) lo.hidden = !u;
+    var promoBox = $('accPromoBox');
+    if (promoBox) promoBox.style.display = u ? '' : 'none';
+    var submit = $('accSubmit');
+    if (submit) {
+      submit.textContent = accMode === 'register' ? 'Registrarme' : 'Iniciar sesión';
+      submit.disabled = !(U.state && U.state.db);
+    }
+    var nameField = $('accNameField');
+    if (nameField) nameField.style.display = accMode === 'register' ? '' : 'none';
+    var toggle = $('accToggle');
+    if (toggle) toggle.textContent = accMode === 'register' ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate';
+  }
+  function initAccountModal() {
+    var ab = $('accountBtn');
+    if (ab) ab.addEventListener('click', openAccountModal);
+    var m = $('accountModal');
+    if (!m) return;
+    var close = function () { m.hidden = true; };
+    var cb = $('accClose');
+    if (cb) cb.addEventListener('click', close);
+    m.addEventListener('click', function (e) { if (e.target === m) close(); });
+    var toggle = $('accToggle');
+    if (toggle) toggle.addEventListener('click', function () {
+      accMode = accMode === 'register' ? 'login' : 'register';
+      var st = $('accStatus');
+      if (st) st.textContent = '';
+      refreshAccountModal();
+    });
+    var submit = $('accSubmit');
+    if (submit) submit.addEventListener('click', async function () {
+      var U = window.DMDUsage;
+      if (!U) return;
+      var st = $('accStatus');
+      if (st) st.textContent = accMode === 'register' ? 'Creando tu cuenta en el servidor…' : 'Iniciando sesión…';
+      var r = accMode === 'register'
+        ? await U.register($('accName').value, $('accEmail').value, $('accPass').value)
+        : await U.login($('accEmail').value, $('accPass').value);
+      if (st) st.textContent = r.ok ? 'Listo ✓' : ('⚠️ ' + (r.error || 'Error'));
+      if (r.ok) {
+        updateUsageUI();
+        await syncServerProjects();
+        var list = loadProjects();
+        if (list[0]) {
+          try { render(list[0].spec, 'proyecto guardado'); restoreChat(loadChat(list[0].name)); } catch (e) {}
+        }
+        setTimeout(close, 700);
+      }
+      refreshAccountModal();
+    });
+    var promoBtn = $('accPromoBtn');
+    if (promoBtn) promoBtn.addEventListener('click', async function () {
+      var U = window.DMDUsage;
+      if (!U) return;
+      var ps = $('accPromoStatus');
+      var r = await U.applyPromo($('accPromo').value);
+      if (ps) ps.textContent = r.ok ? '✓ Código DMDMX aplicado: tu límite es 50 cambios.' : ('⚠️ ' + (r.error || 'Error'));
+      updateUsageUI();
+      refreshAccountModal();
+    });
+    var lo = $('accLogout');
+    if (lo) lo.addEventListener('click', async function () {
+      var U = window.DMDUsage;
+      if (!U) return;
+      await U.logout();
+      restoreAnonProjects();
+      updateUsageUI();
+      refreshAccountModal();
+      var st = $('accStatus');
+      if (st) st.textContent = 'Sesión cerrada. Vuelves al modo anónimo.';
+    });
+  }
+
   async function handlePrompt(promptText, opts) {
     if (state.busy) return;
     var prompt = (promptText || '').trim();
@@ -582,7 +836,50 @@
     // Al reintentar no se duplica el mensaje del usuario: ya está en el chat.
     var isRetry = !!(opts && opts.retry);
     if (!isRetry) addMsg('user', 'Tú', prompt);
-    var agentEl = addMsg('agent', 'DMD', 'Creando tu página…');
+
+    // Fuera de alcance: NO se gasta cupo ni cambios. Mensaje exacto
+    // pedido por Axel + botón para descargar los archivos (.zip).
+    var oos = window.DMDOutOfScope;
+    if (oos && oos.isOutOfScope(prompt)) {
+      addMsg('agent', 'DMD',
+        esc(oos.message) +
+        '<br><span class="muted">Tu proyecto actual no se tocó.</span>' +
+        '<br><button type="button" class="btn btn--outline" data-download-zip="1" style="margin-top:8px">⬇ Descargar mis archivos (.zip)</button>',
+        true);
+      state.busy = false;
+      return;
+    }
+
+    // Límites de uso (local, por navegador): anónimo 3, registrado 25,
+    // con código DMDMX 50. Se cobra 1 cambio cuando la generación
+    // arranca; el reintento manual tras un fallo de IA no cobra otro
+    // (ese intento ya se cobró).
+    var U = window.DMDUsage;
+    if (U && !isRetry) {
+      if (!U.canUse()) {
+        addMsg('agent', 'DMD',
+          '⛔ Ya usaste tus ' + U.limit() + ' cambios' +
+          (U.currentUser() ? '' : ' gratis') +
+          '. Regístrate para tener ' + U.FREE_LIMIT + ' cambios por cuenta (50 con el código promocional DMDMX).' +
+          '<br><button type="button" class="btn btn--primary" data-open-account="1" style="margin-top:8px">Registrarme</button>',
+          true);
+        state.busy = false;
+        return;
+      }
+      var consumed = await U.consume();
+      if (!consumed) {
+        addMsg('agent', 'DMD',
+          '⛔ Se acabaron tus cambios (límite ' + U.limit() + '). ' +
+          (U.currentUser() ? 'Con el código DMDMX llegas a 50 cambios.' : 'Regístrate para tener ' + U.FREE_LIMIT + ' cambios por cuenta (50 con el código DMDMX).') +
+          '<br><button type="button" class="btn btn--primary" data-open-account="1" style="margin-top:8px">Mi cuenta</button>',
+          true);
+        state.busy = false;
+        return;
+      }
+      updateUsageUI();
+    }
+
+    var agentEl = addMsg('agent', 'DMD', 'Estoy generando tu página…');
     // Paso 0 hecho (idea recibida), paso 1 activo (health check).
     renderSteps(agentEl, stepsStates(1, 0));
     tlAdd('Prompt: ' + prompt.slice(0, 120), 'tl--user');
@@ -686,6 +983,20 @@
           '<br><button type="button" class="btn btn--outline" data-retry-ai="1" style="margin-top:8px">↻ Reintentar con IA</button>';
       }
       saveChat();
+    }
+    // Tarjeta de resultado (móvil tipo chat con IA): miniatura + resumen.
+    if (agentEl) appendResultCard(agentEl);
+    // En móvil, tras generar se abre el historial para que la tarjeta
+    // se vea arriba del composer; la miniatura se abre a pantalla casi
+    // completa al tocarla (modal con X y pestañas Vista previa/Código).
+    if (isMobileView()) {
+      setMobileView('chat');
+      var th2 = $('thread');
+      if (th2) {
+        th2.classList.add('open');
+        var ht2 = $('historyToggle');
+        if (ht2) { ht2.textContent = '✕ Cerrar historial'; ht2.setAttribute('aria-expanded', 'true'); }
+      }
     }
     hideStepsOverlay();
     tlAdd(usedAI ? 'Generado con IA Groq' : 'Generado con motor local', 'tl--agent');
@@ -880,6 +1191,8 @@
   }
 
   function initTopbar() {
+    var dzb = $('downloadZipBtn');
+    if (dzb) dzb.addEventListener('click', function () { downloadProjectZip(); });
     var sb = $('shareBtn');
     if (sb) sb.addEventListener('click', function () {
       var done = function () { sb.textContent = 'Enlace copiado ✓'; setTimeout(function () { sb.textContent = 'Compartir'; }, 1500); };
@@ -1086,6 +1399,9 @@
     initSidebar();
     initTopbar();
     initAiModal();
+    initAccountModal();
+    initPreviewModal();
+    updateUsageUI();
     initMobileView();
     watchAiDot();
     // La barra de URL muestra la URL real de esta página (P1-3).
@@ -1098,6 +1414,12 @@
     if (th) th.addEventListener('click', function (e) {
       var b = e.target && e.target.closest ? e.target.closest('[data-retry-ai]') : null;
       if (b && !state.busy && lastAiFailedPrompt) { handlePrompt(lastAiFailedPrompt, { retry: true }); return; }
+      var opv = e.target && e.target.closest ? e.target.closest('[data-open-preview]') : null;
+      if (opv) { openPreviewModal(); return; }
+      var dz2 = e.target && e.target.closest ? e.target.closest('[data-download-zip]') : null;
+      if (dz2) { downloadProjectZip(); return; }
+      var oa = e.target && e.target.closest ? e.target.closest('[data-open-account]') : null;
+      if (oa) { openAccountModal(); return; }
       // Botones del mensaje de publicación (Copiar / Abrir / Descargar).
       var cp = e.target && e.target.closest ? e.target.closest('[data-publish-copy]') : null;
       if (cp) {
@@ -1120,7 +1442,17 @@
         a.remove();
       }
     });
-    restoreLastProject();
+    // Sesión del servidor: si hay cookie, el contador y los proyectos
+    // vienen de la DB (cuenta nueva -> lista vacía; login -> sus
+    // proyectos). Sin DB, queda el modo anónimo local (3 cambios).
+    if (window.DMDUsage && window.DMDUsage.sync) {
+      window.DMDUsage.sync().then(function () {
+        updateUsageUI();
+        return syncServerProjects();
+      }).then(function () { restoreLastProject(); });
+    } else {
+      restoreLastProject();
+    }
     // Banner de fallback local (A4): su botón "Reintentar con IA" vive
     // fuera del thread, así que necesita su propio listener.
     var lb = $('localBanner');

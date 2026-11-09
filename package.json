@@ -1,0 +1,9 @@
+{
+  "name": "dmd-paginas-web-ia",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Builder de páginas con IA de DMD (crear.dmdmx.dev). Funciones serverless de Vercel, sin framework.",
+  "dependencies": {
+    "pg": "^8.13.1"
+  }
+}
