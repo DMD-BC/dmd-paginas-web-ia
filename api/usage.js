@@ -1,7 +1,7 @@
 // /api/usage — Cuota del builder, contada EN EL SERVIDOR.
 //   GET  -> { db, user, quota:{used,limit,promo,remaining} }
 //   POST { action:'consume' } -> cobra 1 cambio si queda cupo.
-//     Con sesión: users.used_count, límite 25 (50 con promo DMDMX).
+//     Con sesión: users.used_count, límite 25 (50 con código promocional).
 //     Sin sesión: anon_usage por hash de IP, límite 3 en total.
 //     Si no queda cupo -> 429 { ok:false, error, used, limit }.
 //     Sin DATABASE_URL -> 503 { db:false } y el cliente usa su

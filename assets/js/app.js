@@ -721,7 +721,7 @@
     renderProjects();
   }
 
-  // Modal Mi cuenta (registro/login en el servidor + código DMDMX).
+  // Modal Mi cuenta (registro/login en el servidor + código promocional).
   var accMode = 'register';
   function openAccountModal() {
     var m = $('accountModal');
@@ -806,7 +806,7 @@
       if (!U) return;
       var ps = $('accPromoStatus');
       var r = await U.applyPromo($('accPromo').value);
-      if (ps) ps.textContent = r.ok ? '✓ Código DMDMX aplicado: tu límite es 50 cambios.' : ('⚠️ ' + (r.error || 'Error'));
+      if (ps) ps.textContent = r.ok ? '✓ Código aplicado: tu límite es 50 cambios.' : ('⚠️ ' + (r.error || 'Error'));
       updateUsageUI();
       refreshAccountModal();
     });
@@ -851,7 +851,7 @@
     }
 
     // Límites de uso (local, por navegador): anónimo 3, registrado 25,
-    // con código DMDMX 50. Se cobra 1 cambio cuando la generación
+    // con código promocional 50. Se cobra 1 cambio cuando la generación
     // arranca; el reintento manual tras un fallo de IA no cobra otro
     // (ese intento ya se cobró).
     var U = window.DMDUsage;
@@ -860,7 +860,7 @@
         addMsg('agent', 'DMD',
           '⛔ Ya usaste tus ' + U.limit() + ' cambios' +
           (U.currentUser() ? '' : ' gratis') +
-          '. Regístrate para tener ' + U.FREE_LIMIT + ' cambios por cuenta (50 con el código promocional DMDMX).' +
+          '. Regístrate para tener ' + U.FREE_LIMIT + ' cambios por cuenta (50 con un código promocional).' +
           '<br><button type="button" class="btn btn--primary" data-open-account="1" style="margin-top:8px">Registrarme</button>',
           true);
         state.busy = false;
@@ -870,7 +870,7 @@
       if (!consumed) {
         addMsg('agent', 'DMD',
           '⛔ Se acabaron tus cambios (límite ' + U.limit() + '). ' +
-          (U.currentUser() ? 'Con el código DMDMX llegas a 50 cambios.' : 'Regístrate para tener ' + U.FREE_LIMIT + ' cambios por cuenta (50 con el código DMDMX).') +
+          (U.currentUser() ? 'Con un código promocional llegas a 50 cambios.' : 'Regístrate para tener ' + U.FREE_LIMIT + ' cambios por cuenta (50 con un código promocional).') +
           '<br><button type="button" class="btn btn--primary" data-open-account="1" style="margin-top:8px">Mi cuenta</button>',
           true);
         state.busy = false;

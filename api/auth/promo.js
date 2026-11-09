@@ -1,4 +1,4 @@
-// POST /api/auth/promo — Código promocional DMDMX (acepta "DMD MX").
+// POST /api/auth/promo — Código promocional (Axel lo comparte en privado).
 // Requiere sesión. Pone users.promo = TRUE: el límite sube a 50.
 // Sin DATABASE_URL -> 503 db:false.
 const { hasDb, query } = require('../_db');
@@ -18,7 +18,7 @@ module.exports = async function handler(req, res) {
     const user = await getSessionUser(req);
     if (!user) return res.status(401).json({ error: 'Primero regístrate o inicia sesión para usar el código.' });
     if (code !== 'DMDMX') {
-      return res.status(400).json({ error: 'Ese código no es válido. El código es DMDMX.' });
+      return res.status(400).json({ error: 'Ese código no es válido. Revisa el código e inténtalo de nuevo.' });
     }
     const updated = await query(
       'UPDATE users SET promo = TRUE WHERE id = $1 RETURNING id, name, email, promo, used_count',

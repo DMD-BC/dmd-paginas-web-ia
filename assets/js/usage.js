@@ -7,7 +7,7 @@
  *     nunca la guarda. La sesión es una cookie httpOnly (el JS no la
  *     puede leer) con el token hasheado en la DB.
  *   - Cuota en servidor: anónimo 3 cambios en total (por IP),
- *     registrado 25, con código DMDMX 50. Cada generación cobra 1
+ *     registrado 25, con código promocional 50. Cada generación cobra 1
  *     cambio con POST /api/usage { action:'consume' }.
  *   - Proyectos: GET/POST /api/projects (por usuario, en la DB).
  *     Cuenta nueva -> lista VACÍA. Al iniciar sesión aparecen SUS
@@ -29,7 +29,6 @@ window.DMDUsage = (function () {
   var ANON_LIMIT = 3;
   var FREE_LIMIT = 25;
   var PROMO_LIMIT = 50;
-  var PROMO_CODE = 'DMDMX';
   var ANON_KEY = 'dmd_usage_anon';
 
   // Espejo local de la cuota del servidor (para que canUse() sea
@@ -213,7 +212,6 @@ window.DMDUsage = (function () {
     ANON_LIMIT: ANON_LIMIT,
     FREE_LIMIT: FREE_LIMIT,
     PROMO_LIMIT: PROMO_LIMIT,
-    PROMO_CODE: PROMO_CODE,
     state: state,
     sync: sync,
     currentUser: currentUser,
