@@ -64,27 +64,12 @@ window.LLM = (function() {
         onToken(`❌ Error de IA: ${error.message}`);
       }
 
-      // Reintento único (P0-1): re-verificar la salud del backend y
-      // generar una vez más antes de rendirse. El llamador (app.js)
-      // cae al generador local con aviso y botón de reintento.
-      try {
-        const healthyAgain = await retryInitialize();
-        if (healthyAgain) {
-          if (onToken) onToken('🔄 Reintentando con IA Groq…');
-          const result = await window.ApiClient.generatePage(prompt, previousSpec);
-          if (!result.spec || !result.spec.type) {
-            throw new Error('Respuesta inválida del servidor: falta spec.type');
-          }
-          return {
-            spec: result.spec,
-            plan: result.plan || `Generado por ${result.model || 'IA'}`,
-            model: result.model || 'groq'
-          };
-        }
-      } catch (retryErr) {
-        console.warn('⚠️ El reintento con IA también falló:', retryErr && retryErr.message);
-      }
-
+      // C1 (2026-11-08): SIN reintento automático de la llamada completa.
+      // Reintentar de inmediato duplicaba el consumo de cupo de Groq por
+      // intento (y con 429, el reintento también cae en 429). El usuario
+      // reintenta a mano con el botón "Reintentar con IA" cuando quiera,
+      // con espera entre intentos. Se relanza para que app.js use el
+      // fallback local con aviso.
       // Relanzar para que app.js use fallback local
       throw error;
     }

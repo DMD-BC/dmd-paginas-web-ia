@@ -6,7 +6,13 @@
 
 const PRIMARY_MODEL = 'openai/gpt-oss-120b';
 const FALLBACK_MODEL = 'openai/gpt-oss-20b';
-const MAX_TOKENS = 8192;
+// C1 (2026-11-08): 4096 tokens bastan para un spec (antes 8192, el doble
+// de cupo por generación). Se mantiene el 120b como modelo principal:
+// NO se cambió a 20b sin probar que el spec salga completo y sin
+// placeholders; el 20b queda solo como fallback si el 120b deja de
+// existir (isModelNotFound). Si el cupo sigue sin alcanzar para un
+// salón, la solución es una key con más cupo o turnos, no bajar de modelo.
+const MAX_TOKENS = 4096;
 const TEMPERATURE = 0.7;
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
@@ -50,24 +56,34 @@ REGLAS DURAS (si las rompes, la página sale mal):
    "Prueba social y confianza", "Llamado a la acción claro", ni nada parecido.
    Tampoco repitas el prompt del usuario como texto de la página: jamás pongas
    "Genera una página de..." ni "Generada a partir de tu idea:" en ningún campo.
-2. INVENTA un negocio coherente y específico. Si el usuario pide una pizzería,
-   inventa un nombre propio (ej. "Pizzería Forno Vivo"), un eslogan, y un menú
-   con platos reales y precios en pesos mexicanos (ej. Margarita $149,
-   Pepperoni $189, Vegetariana $169). Si pide una florería, inventa ramos
-   reales con precios; si pide una consultora, servicios reales con precios
-   o alcances. El título NUNCA es el tema genérico ("Pizzeria", "Tienda").
-3. CONTENIDO EN ESPAÑOL (México), concreto y creíble: testimonios con nombre
-   y ciudad reales (ej. "Mariana G., Ciudad de México"), horarios
-   (ej. "Lun–Dom 12:00–23:00"), ubicación (colonia y ciudad), beneficios
-   concretos (ej. "Masa fermentada 48 h, horno a 450°"), preguntas frecuentes
-   con respuestas útiles.
+2. INVENTA un negocio coherente y específico (nombre propio, eslogan,
+   menú/servicios con descripciones reales). PERO NUNCA INVENTES DATOS
+   DE CONTACTO NI PRECIOS: jamás inventes un número de teléfono,
+   WhatsApp, dirección, correo ni precios. Si el usuario NO dio esos
+   datos, usa el marcador visible "[TU TELÉFONO]", "[TU DIRECCIÓN]",
+   "[TU CORREO]" o "[PRECIO]" en ese campo, u omite esa sección. Un
+   teléfono o dirección inventados se publicarían como reales y el
+   cliente llamaría a un desconocido. Ej.: si pide una pizzería,
+   inventa el nombre ("Pizzería Forno Vivo"), el eslogan y platos
+   reales con su descripción; los precios van como "[PRECIO]" salvo
+   que el usuario los haya dado. Si el usuario SÍ dio su teléfono,
+   dirección o precios en el prompt, úsalos tal cual.
+3. CONTENIDO EN ESPAÑOL (México), concreto y creíble: testimonios con
+   nombre y ciudad (son reseñas de ejemplo, no datos de contacto),
+   horarios (ej. "Lun–Dom 12:00–23:00"), beneficios concretos
+   (ej. "Masa fermentada 48 h, horno a 450°"), preguntas frecuentes
+   con respuestas útiles. La ubicación solo si el usuario la dio; si
+   no, "[TU DIRECCIÓN]".
 4. SECCIONES: entre 6 y 8. Empieza siempre con "hero" y termina con "cta" o
    "footer". Para negocios de comida incluye "menu" con al menos 4 platos;
    para servicios incluye "pricing" o "features" con servicios reales;
    incluye "testimonials" con al menos 3 reseñas y "faq" con al menos 3 preguntas.
 5. ITEMS: cada item es un OBJETO con "name" y "description" reales. "price"
    solo cuando aplica (platos, planes, productos) y siempre en MXN con formato
-   "$149". Nunca dejes "description" vacío ni con texto genérico.
+   "$149" — o "[PRECIO]" si el usuario no dio precios (nunca inventes
+   precios). "period": "mes" SOLO si el plan es de suscripción mensual;
+   nunca pongas "period" en productos o servicios de pago único.
+   Nunca dejes "description" vacío ni con texto genérico.
 6. IMÁGENES: "heroImageQuery" e "imageQuery" son palabras clave EN INGLÉS
    para buscar una foto real (ej. "wood fired pizza margherita",
    "tacos al pastor", "coffee shop interior"). NUNCA inventes URLs de imágenes.
@@ -76,7 +92,10 @@ REGLAS DURAS (si las rompes, la página sale mal):
    (ej. rojo tomate #dc2626 para pizzería, verde #16a34a para florería).
    "dark": false salvo que el usuario pida tema oscuro.
 8. JSON válido, sin markdown, sin comas finales, sin caracteres sin escapar.
-   Si no sabes un dato, invéntalo de forma coherente; nunca uses placeholders.
+   Si no sabes un dato, usa el marcador visible ([TU TELÉFONO],
+   [TU DIRECCIÓN], [TU CORREO], [PRECIO]) o omite la sección; NUNCA
+   inventes teléfono, WhatsApp, dirección, correo ni precios, y nunca
+   uses placeholders genéricos ("Título", "Descripción") ni "Lorem".
 9. Si el mensaje incluye "DATOS REALES ENCONTRADOS EN LA WEB", USA esos datos
    (platos, servicios, precios típicos, historia del giro) en el contenido
    en vez de inventarlos; no contradigas esos datos.
@@ -93,8 +112,8 @@ EJEMPLO de nivel esperado (para "una página de una pizzería"):
   "sections": [
     { "type": "hero", "title": "Pizza como debe ser", "content": "Horno de leña a 450°, masa fermentada 48 horas y queso mozzarella fresco todos los días.", "imageQuery": "wood fired pizza margherita", "items": [] },
     { "type": "menu", "title": "El menú", "content": "Nuestras pizzas más pedidas, hechas al momento.", "items": [
-      { "name": "Margarita", "description": "Jitomate San Marzano, mozzarella fresca y albahaca.", "price": "$149", "imageQuery": "pizza margherita" },
-      { "name": "Pepperoni", "description": "Pepperoni, mozzarella y orégano, borde crujiente.", "price": "$189", "imageQuery": "pepperoni pizza" }
+      { "name": "Margarita", "description": "Jitomate San Marzano, mozzarella fresca y albahaca.", "price": "[PRECIO]", "imageQuery": "pizza margherita" },
+      { "name": "Pepperoni", "description": "Pepperoni, mozzarella y orégano, borde crujiente.", "price": "[PRECIO]", "imageQuery": "pepperoni pizza" }
     ] },
     { "type": "testimonials", "title": "Lo que dicen", "content": "Clientes que vuelven cada semana.", "items": [
       { "name": "Mariana G., Ciudad de México", "description": "La mejor pizza al horno de leña que he probado en la Roma. La masa es otro nivel.", "price": "", "imageQuery": "" }
@@ -153,6 +172,23 @@ function cleanText(text) {
   return String(text || '').trim();
 }
 
+// A1 — red de seguridad: si el modelo igual inventa un teléfono o
+// dirección con los patrones típicos de relleno (1234/5678…), se
+// sustituye por el marcador visible en vez de publicarlo como real.
+// Solo toca secuencias telefónicas que contienen 1234 o 9876, y las
+// direcciones inventadas observadas en la auditoría; un número real
+// dado por el usuario (sin esos patrones) pasa intacto.
+function scrubInventedContact(text) {
+  let s = String(text || '');
+  s = s.replace(/\+?[\d][\d\s\-()]{6,}\d/g, (m) => {
+    const digits = m.replace(/\D/g, '');
+    return (/1234|9876/.test(digits) && digits.length >= 10) ? '[TU TELÉFONO]' : m;
+  });
+  s = s.replace(/Calle Hidalgo\s*#?\s*123[^\n,]*/gi, '[TU DIRECCIÓN]');
+  s = s.replace(/Av\.?\s*Insurgentes Sur\s*1234[^\n,]*/gi, '[TU DIRECCIÓN]');
+  return s;
+}
+
 function sanitizeSpec(spec) {
   if (!spec || typeof spec !== 'object') {
     throw new Error('Spec inválido: Groq no retornó un objeto JSON');
@@ -161,6 +197,8 @@ function sanitizeSpec(spec) {
     throw new Error('Spec inválido: falta type o title (o el título es genérico)');
   }
   if (isForbidden(spec.tagline)) spec.tagline = '';
+  spec.tagline = scrubInventedContact(spec.tagline);
+  spec.title = scrubInventedContact(spec.title);
   if (!Array.isArray(spec.sections) || spec.sections.length === 0) {
     throw new Error('Spec inválido: faltan sections');
   }
@@ -170,16 +208,16 @@ function sanitizeSpec(spec) {
     .map((s) => {
       const section = {
         type: String(s.type),
-        title: cleanText(s.title),
-        content: isForbidden(s.content) ? '' : cleanText(s.content),
+        title: scrubInventedContact(cleanText(s.title)),
+        content: isForbidden(s.content) ? '' : scrubInventedContact(cleanText(s.content)),
         imageQuery: cleanText(s.imageQuery || '')
       };
       if (Array.isArray(s.items)) {
         section.items = s.items
           .filter((it) => it && typeof it === 'object')
           .map((it) => ({
-            name: cleanText(it.name || it.title || ''),
-            description: cleanText(it.description || it.desc || it.content || ''),
+            name: scrubInventedContact(cleanText(it.name || it.title || '')),
+            description: scrubInventedContact(cleanText(it.description || it.desc || it.content || '')),
             price: cleanText(it.price || ''),
             imageQuery: cleanText(it.imageQuery || '')
           }))

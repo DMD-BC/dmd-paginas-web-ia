@@ -110,9 +110,14 @@
   const formatPrice = (p) => {
     if (p === undefined || p === null || String(p).trim() === "") return "";
     const s = String(p).trim();
-    if (s.includes("$")) return s;
-    if (/^\d+(\.\d+)?$/.test(s)) return "$" + s;
-    return s;
+    // Precios siempre con 2 decimales ($1.50, no $1.5). Solo se
+    // reformatea un precio simple ($149, 1.5, $2,500 MXN); textos
+    // como "Gratis" o "desde $99" se dejan tal cual.
+    const m = s.match(/^\$?\s*([\d,]+(?:\.\d{1,2})?)\s*(MXN)?$/i);
+    if (!m) return s;
+    const n = parseFloat(m[1].replace(/,/g, ""));
+    if (Number.isNaN(n)) return s;
+    return "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (m[2] ? " MXN" : "");
   };
   // Normaliza un item: acepta objeto {name,title,description,price,
   // imageQuery} o string simple. Devuelve null si es relleno.
@@ -124,7 +129,10 @@
     const name = String(it.name || it.title || "").trim();
     const description = String(it.description || it.desc || it.content || "").trim();
     if (!name || isPlaceholder(name) || isPlaceholder(description)) return null;
-    return { name, description, price: formatPrice(it.price), imageQuery: String(it.imageQuery || "").trim() };
+    // period: "mes" solo para planes de suscripción (lo usa pricingHtml
+    // para decidir si muestra "/mes"); cualquier otro valor se ignora.
+    const period = String(it.period || "").trim().toLowerCase() === "mes" ? "mes" : "";
+    return { name, description, price: formatPrice(it.price), imageQuery: String(it.imageQuery || "").trim(), period };
   };
   // Normaliza un spec: las secciones pueden ser strings viejos
   // (["nav","hero","features"]) u objetos ricos del nuevo Groq.
@@ -154,7 +162,9 @@
     out.sections = keys;
     return out;
   };
-  const richSec = (spec, key) => (spec.rich && spec.rich[key]) || null;
+  // Tolerante a spec undefined/null (C2): si un renderer se llama sin
+  // spec, devuelve null en vez de romper con "reading 'rich'".
+  const richSec = (spec, key) => (spec && spec.rich && spec.rich[key]) || null;
 
   const COLORES = {
     verde: "#16a34a", green: "#16a34a",
@@ -218,7 +228,13 @@
     // tiene prioridad sobre palabras sueltas como "precios" o "blog".
     const SITIO = /(landing page|landing|p[áa]gina web|sitio web|p[áa]gina de inicio)/;
     let type = "landing";
-    if (!SITIO.test(p)) for (const t of TIPOS) if (t.re.test(p)) { type = t.key; break; }
+    // C2/M4: un prompt de NEGOCIO ("mi papelería con precios", "servicio
+    // de meseros para eventos") es una landing de ese negocio, nunca una
+    // app de precios/agenda: "precios" o "eventos" sueltos no cambian el
+    // tipo cuando hay un giro detectado.
+    if (detectBusiness(p)) {
+      type = "landing";
+    } else if (!SITIO.test(p)) for (const t of TIPOS) if (t.re.test(p)) { type = t.key; break; }
 
     // tema
     const dark = /(oscuro|dark|modo noche|tema negro|negro)/.test(p) ? true
@@ -287,7 +303,7 @@
      Lo específico va antes que lo genérico. Sin coincidencia, el
      neutro NO habla de equipos ni de SaaS.
      ------------------------------------------------------------------ */
-  const BUSINESS_TYPES = window.DMD_BUSINESS_TYPES;
+  const BUSINESS_TYPES = window.DMD_BUSINESS_TYPES || [];
   const detectBusiness = (text) => {
     const t = normQuery(text || "");
     for (const b of BUSINESS_TYPES) if (b.re.test(t)) return b;
@@ -524,29 +540,38 @@ input,textarea,select{font:inherit}
 .f{padding:22px}.f__i{font-size:22px;margin-bottom:10px}.f h3{font-size:18px}.f p{margin-top:6px;font-size:14px}`;
 
   const pricingHtml = (spec) => {
+    spec = spec || {};
     const defaultPricing = [
-      ["Free", "$0", ["1 proyecto", "Preview público", "Soporte comunidad"]],
-      ["Pro", "$25", ["Proyectos ilimitados", "Dominio propio", "Backend incluido"]],
-      ["Team", "$60", ["Todo lo de Pro", "Colaboración", "SSO y roles"]]
-    ].map(([n, pr, items]) => ({ name: n, price: pr, items }));
+      ["Free", "$0", ["1 proyecto", "Preview público", "Soporte comunidad"], "mes"],
+      ["Pro", "$25", ["Proyectos ilimitados", "Dominio propio", "Backend incluido"], "mes"],
+      ["Team", "$60", ["Todo lo de Pro", "Colaboración", "SSO y roles"], "mes"]
+    ].map(([n, pr, items, period]) => ({ name: n, price: pr, items, period }));
     // Spec rico: planes reales del modelo (name=plan, price, description).
     const sec = richSec(spec, "pricing");
     const rich = sec && sec.items.length ? sec.items.map((it) => ({
-      name: it.name, price: it.price || "", items: it.description ? [it.description] : []
+      name: it.name, price: it.price || "", items: it.description ? [it.description] : [],
+      description: it.description || "", period: it.period || ""
     })) : null;
     const list = rich || (spec.content && spec.content.pricing) || defaultPricing;
-    
+
     return `
 <section class="sec" id="pricing"><div class="wrap">
   <h2 class="sec__t">Precios simples</h2>
   <p class="sec__s muted">Empieza gratis, escala cuando quieras.</p>
   <div class="grid grid--3">
-    ${list.map((p, i) => `
+    ${list.map((p, i) => {
+      // A2: "/mes" SOLO si es suscripción explícita (period:"mes" en el
+      // spec, o la descripción dice suscripción/mensual). Un precio de
+      // producto o servicio ($2 la copia, $2,500 el arreglo) no lleva /mes.
+      const descText = (p.description || "") + " " + (p.items || []).join(" ");
+      const isSub = p.period === "mes" || /suscripci|mensual|al mes|por mes/i.test(descText);
+      const price = formatPrice(p.price) || p.price || "";
+      return `
       <article class="card plan ${i === 1 ? "plan--hl" : ""}">
-        <h3>${p.name}</h3><div class="plan__p">${p.price}<span class="muted">/mes</span></div>
+        <h3>${p.name}</h3><div class="plan__p">${price}${isSub ? '<span class="muted">/mes</span>' : ""}</div>
         <ul>${p.items.map((x) => `<li>${x}</li>`).join("")}</ul>
         <a class="btn ${i === 1 ? "" : "btn--ghost"}" style="width:100%" href="#">Elegir ${p.name}</a>
-      </article>`).join("")}
+      </article>`;}).join("")}
   </div>
 </div></section>`;
   };
@@ -595,6 +620,7 @@ input,textarea,select{font:inherit}
   const galleryCss = `.g{height:var(--h);background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 18%,var(--card)),var(--card))}`;
 
   const faqHtml = (spec) => {
+    spec = spec || {};
     const defaultFaq = [["¿Es fácil empezar?", "Sí, en minutos tienes algo funcionando."], ["¿Puedo cancelar?", "Cuando quieras, sin compromiso."], ["¿Hay soporte?", "Sí, por chat y correo."]];
     // Spec rico: name=pregunta, description=respuesta.
     const sec = richSec(spec, "faq");
@@ -947,8 +973,9 @@ document.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{const k=b.datase
   };
 
   T.pricing = (spec) => {
-    const l = T.landing(spec);
-    return { html: navHtml(spec) + heroHtml(spec) + pricingHtml() + faqHtml() + footerHtml(spec), css: navCss + heroCss + pricingCss + faqCss + footerCss, js: "" };
+    // C2: pricingHtml/faqHtml RECIBEN el spec (antes se llamaban sin
+    // argumentos y rompían con TypeError reading 'rich').
+    return { html: navHtml(spec) + heroHtml(spec) + pricingHtml(spec) + faqHtml(spec) + footerHtml(spec), css: navCss + heroCss + pricingCss + faqCss + footerCss, js: "" };
   };
 
   T.auth = (spec) => {

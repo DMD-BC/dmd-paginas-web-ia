@@ -158,7 +158,13 @@ button{font:inherit;cursor:pointer;color:inherit}
 .composer__bar{display:flex;align-items:center;justify-content:flex-end;gap:8px}
 .composer__send{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%}
 .composer__send .btn--primary{padding:7px 14px}
-/* ---------- adjuntos del composer (botón "+") ---------- */
+/* ---------- banner de fallback local (A4: visible fuera del thread) ---------- */
+.local-banner{flex:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0;padding:10px 16px;background:#fff7ed;border-bottom:1px solid #fed7aa;font-size:13.5px;color:#7c2d12;z-index:15}
+.local-banner[hidden]{display:none}
+.local-banner__text{flex:1;min-width:200px}
+.local-banner .btn{flex:none}
+/* ---------- contador del prompt (M10) ---------- */
+.composer__meta{display:flex;justify-content:flex-end;font-size:12px}
 .composer{position:relative}
 .attach-btn{font-size:20px;font-weight:600;margin-right:auto}
 .attach-menu{position:absolute;left:12px;bottom:calc(100% + 8px);z-index:30;display:flex;flex-direction:column;gap:2px;min-width:260px;background:var(--white);border-radius:var(--r-lg);box-shadow:0 0 0 1px var(--line),0 16px 40px -14px rgba(60,30,40,.35);padding:6px}
@@ -366,7 +372,8 @@ button{font:inherit;cursor:pointer;color:inherit}
       <input type="file" id="attachLogo" accept="image/*" hidden>
       <input type="file" id="attachFile" accept=".html,.htm,.zip" hidden>
       <div class="attach-chips" id="attachChips"></div>
-      <textarea id="prompt" class="composer__input" rows="2" placeholder="Pide un cambio o describe tu app…"></textarea>
+      <textarea id="prompt" class="composer__input" rows="2" maxlength="2000" placeholder="Pide un cambio o describe tu app…"></textarea>
+      <div class="composer__meta"><span id="promptCount" class="muted">0 / 2000 caracteres</span></div>
       <div class="composer__bar">
         <div class="composer__send">
           <button type="button" class="btn btn--icon attach-btn" title="Adjuntar foto, logo o archivo" id="attachBtn" aria-label="Adjuntar">+</button>
@@ -379,6 +386,13 @@ button{font:inherit;cursor:pointer;color:inherit}
 
   <!-- ================= STAGE ================= -->
   <section class="stage">
+    <!-- Banner de fallback local (A4): fuera del thread, visible también
+         en móvil (el thread está oculto). Se muestra desde app.js cuando
+         la generación cae al motor local, con el reintento manual. -->
+    <div class="local-banner" id="localBanner" hidden>
+      <span class="local-banner__text"></span>
+      <button type="button" class="btn btn--outline" data-retry-ai="1">↻ Reintentar con IA</button>
+    </div>
     <div class="stage__tabs" role="tablist">
       <button class="tab is-on" data-view="preview" role="tab">Preview</button>
       <button class="tab" data-view="code" role="tab">Código</button>
@@ -512,19 +526,36 @@ var EXAMPLES = {
   cafe: {title: "Tienda de café — ejemplo", name: "tienda-cafe", prompt: "Tienda de café con catálogo y pedidos", html: `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Café Lento — Tienda</title><style>body{margin:0;font-family:Inter,system-ui,sans-serif;background:#f7f4ed;color:#1c1c1c}header{display:flex;justify-content:space-between;align-items:center;padding:18px 32px}.logo{font-weight:800}.btn{background:#111;color:#fff;border:0;border-radius:999px;padding:10px 18px;cursor:pointer}.hero{max-width:820px;margin:40px auto;text-align:center;padding:0 20px}.hero h1{font-size:44px;line-height:1.1;margin:12px 0}.grad{background:linear-gradient(90deg,#ff8a4c,#f0467f,#4f7dff);-webkit-background-clip:text;background-clip:text;color:transparent}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:900px;margin:36px auto;padding:0 20px}.card{background:#fcfbf8;border:1px solid #e8e2d6;border-radius:16px;padding:20px}.card h3{margin:0 0 6px}.card p{margin:0;color:#5f5f5d}.quote{max-width:640px;margin:36px auto;text-align:center;font-size:18px;color:#5f5f5d;padding:0 20px}.cta{text-align:center;padding:36px 20px 56px}footer{text-align:center;color:#5f5f5d;padding:24px;font-size:13px}</style></head><body><header><span class="logo">Café Lento</span><button class="btn">Empezar</button></header><section class="hero"><h1>Café de especialidad, <span class="grad">a tu casa</span></h1><p>Granos tostados cada semana. Pide en línea y recíbelo fresco en 24 horas.</p><p><button class="btn">Empezar ahora</button></p></section><section class="cards"><div class="card"><h3>Café de olla</h3><p>Tueste medio · $180 MXN / 250 g</p></div><div class="card"><h3>Cold brew</h3><p>Suave y dulce · $95 MXN</p></div><div class="card"><h3>Suscripción</h3><p>Tu café favorito, cada mes, -15%.</p></div></section><p class="quote">&ldquo;El mejor café que he probado fuera de una cafetería.&rdquo;</p><section class="cta"><h2>Pide tu primer paquete</h2><button class="btn">Crear mi proyecto</button></section><footer>Hecho con DMD | paginas web</footer></body></html>`},
   buenfin: {title: "Buen Fin — Meseros Luna", name: "buen-fin", prompt: "Landing de Buen Fin para Meseros Luna: contrata meseros para tu evento y llévate un mesero gratis, paquetes para bodas, XV años y banquetes, contacto por WhatsApp", html: `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Meseros Luna — Meseros para eventos · El Buen Fin 2026</title><style>body{margin:0;font-family:Inter,system-ui,sans-serif;background:#f7f4ed;color:#1c1c1c}header{display:flex;justify-content:space-between;align-items:center;padding:18px 32px}.logo{font-weight:800}.btn{background:#111;color:#fff;border:0;border-radius:999px;padding:10px 18px;cursor:pointer}.hero{max-width:820px;margin:40px auto;text-align:center;padding:0 20px}.hero h1{font-size:44px;line-height:1.1;margin:12px 0}.grad{background:linear-gradient(90deg,#ff8a4c,#f0467f,#4f7dff);-webkit-background-clip:text;background-clip:text;color:transparent}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:900px;margin:36px auto;padding:0 20px}.card{background:#fcfbf8;border:1px solid #e8e2d6;border-radius:16px;padding:20px}.card h3{margin:0 0 6px}.card p{margin:0;color:#5f5f5d}.quote{max-width:640px;margin:36px auto;text-align:center;font-size:18px;color:#5f5f5d;padding:0 20px}.cta{text-align:center;padding:36px 20px 56px}.cta p{color:#5f5f5d}footer{text-align:center;color:#5f5f5d;padding:24px;font-size:13px}.badge{display:inline-block;background:#111;color:#fff;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:700;letter-spacing:.04em}.offer{background:linear-gradient(90deg,#ff8a4c,#f0467f,#4f7dff);color:#fff;text-align:center;padding:14px 20px;font-weight:700}.offer p{margin:0}.tag{display:inline-block;background:#fff0e8;color:#c2410c;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700;margin-bottom:8px}.price{color:#f0467f;font-weight:800;font-size:20px}.wa{background:#25d366!important;display:inline-block;text-decoration:none}@media(max-width:760px){.cards{grid-template-columns:1fr!important}}</style></head><body><header><span class="logo">Meseros Luna</span><button class="btn">Apartar fecha</button></header><div class="offer"><p>EL BUEN FIN 2026 · Del 13 al 17 de noviembre · Contrata tu servicio y llévate UN mesero GRATIS</p></div><section class="hero"><span class="badge">EL BUEN FIN · 13–17 NOV 2026</span><h1>Tu evento, con <span class="grad">un mesero GRATIS</span></h1><p>Meseros Luna: meseros profesionales para bodas, XV años y banquetes. Del viernes 13 al martes 17 de noviembre de 2026, contrata tu servicio de meseros y te regalamos un mesero gratis. Solo 5 días: cuando se acaban, se acaban.</p><p><button class="btn">Ver paquetes</button> <a class="btn wa" href="https://wa.me/[NUMERO_WHATSAPP]?text=Hola%20Meseros%20Luna%2C%20quiero%20apartar%20meseros%20para%20mi%20evento%20en%20Buen%20Fin">Apartar por WhatsApp</a></p></section><section class="cards"><div class="card"><span class="tag">BODAS · XV AÑOS · BANQUETES</span><h3>[PAQUETE 1]</h3><p>[DESCRIPCIÓN DEL PAQUETE 1: CUÁNTOS MESEROS, HORAS Y QUÉ INCLUYE]</p><p><span class="price">[PRECIO]</span></p></div><div class="card"><span class="tag">BODAS · XV AÑOS · BANQUETES</span><h3>[PAQUETE 2]</h3><p>[DESCRIPCIÓN DEL PAQUETE 2: CUÁNTOS MESEROS, HORAS Y QUÉ INCLUYE]</p><p><span class="price">[PRECIO]</span></p></div><div class="card"><span class="tag">BODAS · XV AÑOS · BANQUETES</span><h3>[PAQUETE 3]</h3><p>[DESCRIPCIÓN DEL PAQUETE 3: CUÁNTOS MESEROS, HORAS Y QUÉ INCLUYE]</p><p><span class="price">[PRECIO]</span></p></div></section><section class="cards"><div class="card"><h3>Meseros uniformados</h3><p>Personal presentable, con chaleco y servicio formal para que tu evento se vea de primera.</p></div><div class="card"><h3>Puntuales y profesionales</h3><p>Llegamos antes que tus invitados y nos quedamos hasta que termina tu evento.</p></div><div class="card"><h3>Atención a tus invitados</h3><p>Servicio de mesa, bebidas y apoyo en todo momento para que tú solo disfrutes.</p></div></section><p class="quote">&ldquo;[TESTIMONIO DE UN CLIENTE]&rdquo; — [NOMBRE DEL CLIENTE]</p><section class="cta"><h2>Las ofertas terminan el martes 17 de noviembre</h2><p>Las fechas de Buen Fin se apartan rápido: reserva hoy por WhatsApp.</p><p><a class="btn wa" href="https://wa.me/[NUMERO_WHATSAPP]">Escríbenos por WhatsApp</a></p></section><footer>Meseros Luna · [CIUDAD], México · Hecho con DMD | paginas web</footer></body></html>`}
 };
+var __exampleLoadedSlug = null;
 function loadExample(slug){
   var ex = EXAMPLES[slug];
   if(!ex) return false;
+  // initFromQuery se llama 2 veces (DOMContentLoaded + 400 ms): cargar la
+  // plantilla una sola vez para no duplicar el mensaje ni el guardado.
+  if(window.__exampleLoadedSlug === slug) return true;
+  window.__exampleLoadedSlug = slug;
   var $ = function(id){ return document.getElementById(id); };
-  var pv = $('preview'); if(pv) pv.srcdoc = ex.html;
   /* Puente al Editor IA: guarda este ejemplo como plantilla activa para
      que editor-ia.html lo abra directamente. */
   try{
     var m = ex.html.match(/<title>([^<]*)/);
-    var brand = m ? m[1].split('—')[0].trim() : ex.name;
+    var brand = m ? m[1].split('\u2014')[0].trim() : ex.name;
     localStorage.setItem('dmd_editor_template', JSON.stringify({brand: brand, label: ex.title, accent: '#f0467f', dark: false, isPremium: false, html: ex.html}));
   }catch(e){}
-  var url = $('url'); if(url) url.textContent = window.location.href;
+  // C3: la plantilla queda como PROYECTO REAL (state.spec/html/files/name
+  // + saveProject), igual que loadUploadedPage(). Antes solo se ponía
+  // preview.srcdoc: Publicar decía "primero genera una página" o, peor,
+  // publicaba el proyecto ANTERIOR restaurado. Ahora Publicar publica
+  // LA plantilla que se ve, en las 7 plantillas incl. buenfin.
+  if(window.DMDLoadUploadedPage){
+    window.DMDLoadUploadedPage(ex.html, ex.title, ex.name);
+  } else {
+    // Respaldo si app.js no cargó: solo vista previa (no publicable).
+    var pv = $('preview'); if(pv) pv.srcdoc = ex.html;
+    var pn0 = $('projectName'); if(pn0) pn0.value = ex.name;
+    var code = $('code'); if(code) code.textContent = ex.html;
+    var cf = $('codeFile'); if(cf) cf.textContent = 'index.html';
+  }
   var pn = $('projectName'); if(pn) pn.value = ex.name;
   if(!$('exampleBadge') && pn && pn.parentNode){
     var b = document.createElement('span');
@@ -533,23 +564,12 @@ function loadExample(slug){
     b.style.color = '#fff'; b.textContent = 'Ejemplo';
     pn.parentNode.insertBefore(b, pn.nextSibling);
   }
-  var code = $('code'); if(code) code.textContent = ex.html;
-  var cf = $('codeFile'); if(cf) cf.textContent = 'index.html';
-  var ft = $('filetree'); if(ft) ft.textContent = 'index.html';
   var tl = $('timeline');
   if(tl) tl.innerHTML = '<div>Plantilla cargada: ' + ex.title + '</div>'
-    + '<div>Preview listo — sin esperar a Groq</div>'
+    + '<div>Preview listo \u2014 sin esperar a Groq</div>'
     + '<div>Escribe un cambio en el prompt para editarlo</div>';
   var ec = $('evtCount'); if(ec) ec.textContent = '3';
   var empty = $('empty'); if(empty) empty.style.display = 'none';
-  var th = $('thread');
-  if(th && !$('exampleNote')){
-    var n = document.createElement('div');
-    n.id = 'exampleNote'; n.className = 'muted';
-    n.textContent = 'Ejemplo cargado: ' + ex.title
-      + ' — escribe un cambio abajo para editarlo con IA.';
-    th.insertBefore(n, th.firstChild);
-  }
   var input = $('prompt'); if(input) input.value = ex.prompt;
   if (window.matchMedia && window.matchMedia('(max-width: 1100px)').matches) {
     if (window.DMDShowStage) window.DMDShowStage();

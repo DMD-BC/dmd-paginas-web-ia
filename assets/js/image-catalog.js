@@ -92,6 +92,19 @@
     // nada que ver con pastel, y "colores pastel" (lápices) tampoco
     // es un pastel de comer (ver el guardado en unsplashUrl abajo).
     [/papeler[ií]a|stationery|cuaderno|lapiz|pluma|mochila|agenda|carpeta|borrador|\bregla\b|tijeras|pegamento|marcador|plumon|crayon|acuarela|\bpapel\b|utiles/, UNSPLASH.papeleria],
+    // Papelería en INGLÉS (así llega imageQuery de Groq): "spiral
+    // notebook", "pencil", "color markers", "ring binder" caían al
+    // fallback de tienda de ropa (A3). Cuaderno/lápiz -> foto de
+    // libreta; marcadores/carpeta -> organizador de escritorio.
+    [/spiral notebook|notebook|notepad|journal/, UNSPLASH.cuaderno],
+    [/pencil|ballpoint|\bpen\b|eraser|sharpener/, UNSPLASH.cuaderno],
+    [/color markers?|\bmarkers?|highlighter|ring binder|binder|folder/, UNSPLASH.papeleria2],
+    [/school supplies|backpack/, UNSPLASH.utiles],
+    [/tortilla/, UNSPLASH.comida],
+    [/waiter|waiters|banquet|catering/, UNSPLASH.restaurante],
+    [/toy|lego|\bdoll\b|plush/, UNSPLASH.jugueteria],
+    [/candy|sweets|chocolate bar/, UNSPLASH.dulceria],
+    [/shoes|sneakers|boots|footwear/, UNSPLASH.zapateria],
     [/pincel|pintura|\bdibujo\b|arte/, UNSPLASH.arte],
     [/ferreter[ií]a|herramienta|taladro|tornillo/, UNSPLASH.ferreteria],
     [/farmacia|medicina|medicamento|pastilla|farmaceutic/, UNSPLASH.farmacia],
@@ -131,7 +144,7 @@
     [/oficina|office|consultor|reunion|meeting/, UNSPLASH.oficina],
     [/equipo|team|colaboraci/, UNSPLASH.equipo],
     [/casa|house|inmobiliaria|departamento/, UNSPLASH.casa],
-    [/moda|fashion|ropa|vestido/, UNSPLASH.moda],
+    [/moda|fashion|ropa|vestido|clothing|clothes|t-shirt|apparel/, UNSPLASH.moda],
     [/viaje|travel|playa|monta/, UNSPLASH.viaje],
     [/tecnolog|software|laptop|programaci/, UNSPLASH.tecnologia],
     [/restaurante|restaurant|comida|food|menu|cocina/, UNSPLASH.comida],
@@ -140,6 +153,17 @@
     // regla propia, como la papelería.
     [/.*/, UNSPLASH.tienda]
   ];
+
+  // Fallback por producto: antes TODAS las queries sin regla caían a la
+  // misma foto (interior de tienda de ropa). Ahora se reparte entre 4
+  // fotos neutras según un hash de la query, así cada producto sin foto
+  // curada se ve distinto (A3).
+  var FALLBACK_PHOTOS = [UNSPLASH.tienda, UNSPLASH.oficina, UNSPLASH.equipo, UNSPLASH.libreria];
+  var fallbackPhoto = function (q) {
+    var h = 0;
+    for (var i = 0; i < q.length; i++) h = ((h << 5) - h + q.charCodeAt(i)) | 0;
+    return FALLBACK_PHOTOS[Math.abs(h) % FALLBACK_PHOTOS.length];
+  };
 
   // Devuelve la URL de una foto real verificada, o null si no hay query.
   var unsplashUrl = function (query, w) {
@@ -151,6 +175,10 @@
     q = q.replace(/colores?\s+pastel|tonos?\s+pastel|pastel\s+colou?rs?/g, " ");
     for (var i = 0; i < UNSPLASH_KEYWORDS.length; i++) {
       if (UNSPLASH_KEYWORDS[i][0].test(q)) {
+        // La última regla es el catch-all genérico: foto variada por query.
+        if (i === UNSPLASH_KEYWORDS.length - 1) {
+          return "https://images.unsplash.com/" + fallbackPhoto(q) + "?q=80&w=" + (w || 1200) + "&auto=format&fit=crop";
+        }
         return "https://images.unsplash.com/" + UNSPLASH_KEYWORDS[i][1] + "?q=80&w=" + (w || 1200) + "&auto=format&fit=crop";
       }
     }

@@ -196,23 +196,37 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    const finalHtml = finalizeHtml(rawHtml, slug, title || slug);
-    const put = await gh(
-      '/repos/' + OWNER + '/' + REPO + '/contents/sitios/' + slug + '.html',
-      token,
-      {
-        method: 'PUT',
-        body: {
-          message: 'Publica sitio: ' + slug + ' (DMD Builder)',
-          content: Buffer.from(finalHtml, 'utf8').toString('base64'),
-          branch: BRANCH
+    // M3: el check-then-PUT no es atómico: si dos personas publican el
+    // mismo slug a la vez, GitHub responde 422 (el archivo ya existe).
+    // En vez de devolver 502 directo, se reintenta el PUT con el
+    // siguiente slug libre (slug-2, slug-3…), hasta 5 intentos.
+    const base = slug.replace(/-\d+$/, '');
+    let put = null;
+    let putSlug = slug;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const trySlug = attempt === 0 ? slug : base + '-' + (attempt + 1);
+      putSlug = trySlug;
+      put = await gh(
+        '/repos/' + OWNER + '/' + REPO + '/contents/sitios/' + trySlug + '.html',
+        token,
+        {
+          method: 'PUT',
+          body: {
+            message: 'Publica sitio: ' + trySlug + ' (DMD Builder)',
+            content: Buffer.from(finalizeHtml(rawHtml, trySlug, title || trySlug), 'utf8').toString('base64'),
+            branch: BRANCH
+          }
         }
-      }
-    );
-    if (put.status !== 201 && put.status !== 200) {
-      const msg = (put.data && put.data.message) || ('GitHub ' + put.status);
+      );
+      if (put.status === 201 || put.status === 200) { slug = trySlug; break; }
+      if (put.status !== 422) break;
+      // 422: el slug ya existe (carrera) -> probar el siguiente.
+    }
+    if (!put || (put.status !== 201 && put.status !== 200)) {
+      const msg = (put && put.data && put.data.message) || ('GitHub ' + (put ? put.status : '?'));
       return res.status(502).json({ error: 'GitHub no aceptó la publicación: ' + msg });
     }
+    slug = putSlug;
 
     return res.status(200).json({
       success: true,

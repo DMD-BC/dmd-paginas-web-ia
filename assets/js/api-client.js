@@ -8,7 +8,10 @@
 window.ApiClient = (function () {
   'use strict';
 
-  var GENERATE_TIMEOUT_MS = 55000;
+  // M6: 65 s (antes 55 s). El servidor puede tardar hasta 50 s de Groq
+  // + 6 s de búsqueda web = 56 s; con 55 s el cliente abortaba a 1 s
+  // del éxito. 65 s cubre el peor caso sin tocar el timeout del servidor.
+  var GENERATE_TIMEOUT_MS = 65000;
   var HEALTH_TIMEOUT_MS = 8000;
 
   function withTimeout(ms) {

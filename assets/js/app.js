@@ -2,8 +2,9 @@
  * app.js — Controlador del builder (estética Lovable).
  * Flujo de generación:
  *   1. Intenta la IA real de DMD: POST /api/generate (Groq, en el servidor).
- *      Antes de decidir, re-verifica la salud del backend (LLM.ensureReady)
- *      y, si la generación falla, la reintenta una vez (P0-1).
+ *      Antes de decidir, re-verifica la salud del backend (LLM.ensureReady).
+ *      Si la generación falla NO se reintenta sola (C1): cae al generador
+ *      local con aviso y botón "Reintentar con IA" manual.
  *   2. Si el backend falla, tarda o no responde, cae al generador local
  *      determinista (window.Generator.analyze) para que la experiencia
  *      nunca se rompa, pero AVISA en el chat y ofrece "Reintentar con IA"
@@ -292,6 +293,11 @@
     if (isMobileView()) setMobileView('stage');
   }
 
+  // C3: loadExample() (app.html) carga plantillas con esto, para que la
+  // plantilla quede como proyecto real (state.spec/html/files/name) y
+  // Publicar publique LA plantilla que se ve, no el proyecto anterior.
+  window.DMDLoadUploadedPage = loadUploadedPage;
+
   function escRe(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
   async function handleUploadedPageFile(file) {
@@ -542,13 +548,35 @@
 
   /* ---------------- generación ---------------- */
 
+  /* ---------------- banner de fallback local (A4) ----------------
+     En móvil el thread está oculto (display:none) hasta tocar
+     "Historial del chat", así que el aviso "la IA no respondió" y el
+     botón "Reintentar con IA" no se veían. Este banner vive FUERA del
+     thread, sobre la vista previa, y se muestra/oculta desde
+     handlePrompt. El botón reintenta el mismo prompt (ver init()). */
+  function showLocalBanner(errMsg) {
+    var b = $('localBanner');
+    if (!b) return;
+    var t = b.querySelector('.local-banner__text');
+    if (t) t.textContent = '⚠️ La IA no respondió' + (errMsg ? ' (' + errMsg + ')' : '') + '. Esta versión se generó con el motor local.';
+    b.hidden = false;
+  }
+  function hideLocalBanner() {
+    var b = $('localBanner');
+    if (b) b.hidden = true;
+  }
+
   // Prompt del último fallo de IA, para el botón "Reintentar con IA".
   var lastAiFailedPrompt = '';
 
   async function handlePrompt(promptText, opts) {
     if (state.busy) return;
     var prompt = (promptText || '').trim();
-    if (!prompt) return;
+    // M10: prompt vacío con feedback (antes retornaba en silencio).
+    if (!prompt) {
+      addMsg('agent', 'DMD', '✏️ Escribe tu idea arriba: por ejemplo, "una página para mi papelería con precios y contacto".');
+      return;
+    }
     state.busy = true;
 
     // Al reintentar no se duplica el mensaje del usuario: ya está en el chat.
@@ -626,6 +654,7 @@
       var doneHtml = stepsHtml(['done', 'done', 'done', 'done', 'done']);
       if (usedAI) {
         lastAiFailedPrompt = '';
+        hideLocalBanner();
         var attachNote = '';
         if (state.attachments.logo || state.attachments.photos.length) {
           attachNote = '<br><span class="muted">Usé tu logo' +
@@ -633,11 +662,19 @@
             ' en la página.</span>';
         }
         agentEl.innerHTML = doneHtml + esc(summary || ('Listo: ' + (spec.title || 'tu página'))) +
-          '<br><span class="muted">Generado con IA Groq 🤖</span>' + attachNote;
+          '<br><span class="muted">Generado con IA Groq 🤖</span>' + attachNote +
+          // A1: avisar siempre tras una generación con IA: los datos de
+          // contacto/precios que el usuario no dio salen como marcadores
+          // [TU TELÉFONO] / [TU DIRECCIÓN] / [PRECIO] y hay que
+          // revisarlos antes de publicar.
+          '<br><span class="muted">⚠️ Revisa tu teléfono, dirección y precios antes de publicar: si no me los diste, aparecen como [TU TELÉFONO], [TU DIRECCIÓN] o [PRECIO].</span>';
       } else {
         // Aviso visible (no silencioso): la versión es del motor local y
         // se ofrece reintentar el MISMO prompt contra la IA (P0-1).
         lastAiFailedPrompt = prompt;
+        // A4: el aviso también fuera del thread (banner sobre el preview),
+        // porque en móvil el thread está oculto y nadie lo vería.
+        showLocalBanner(errMsg);
         var attachNoteLocal = '';
         if (state.attachments.logo || state.attachments.photos.length) {
           attachNoteLocal = '<br><span class="muted">Usé tu logo' +
@@ -714,6 +751,13 @@
     var form = $('composer');
     var input = $('prompt');
     if (!form || !input) return;
+    // M10: contador visible del límite de 2000 caracteres.
+    var count = $('promptCount');
+    var updateCount = function () {
+      if (count) count.textContent = (input.value.length) + ' / 2000 caracteres';
+    };
+    input.addEventListener('input', updateCount);
+    updateCount();
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var v = input.value;
@@ -787,6 +831,7 @@
     var np = $('newProject');
     if (np) np.addEventListener('click', function () {
       hideStepsOverlay();
+      hideLocalBanner();
       state.spec = null; state.html = ''; state.files = null; state.name = 'mi-app';
       var pv = $('preview'); if (pv) pv.removeAttribute('srcdoc');
       var code = $('code'); if (code) code.textContent = '';
@@ -880,7 +925,9 @@
           var url = $('url');
           if (url) url.textContent = data.url;
           addMsg('agent', 'DMD',
-            '🎉 Tu página ya está en vivo en <a href="' + esc(data.url) + '" target="_blank" rel="noopener">' + esc(data.url) + '</a>' +
+            // M2: el deploy del sitio oficial tarda ~1 min tras el commit;
+            // decir "ya está en vivo" al instante llevaba a un 404.
+            '🎉 Tu página se está publicando y estará lista en ~1 minuto en <a href="' + esc(data.url) + '" target="_blank" rel="noopener">' + esc(data.url) + '</a> (si al abrirla ves un error, espera un minuto y recarga).' +
             '<br><button type="button" class="btn btn--outline" data-publish-copy="' + esc(data.url) + '" style="margin:6px 6px 0 0">📋 Copiar enlace</button>' +
             '<button type="button" class="btn btn--outline" data-publish-open="' + esc(data.url) + '" style="margin-top:6px">↗ Abrir página</button>',
             true);
@@ -1074,6 +1121,13 @@
       }
     });
     restoreLastProject();
+    // Banner de fallback local (A4): su botón "Reintentar con IA" vive
+    // fuera del thread, así que necesita su propio listener.
+    var lb = $('localBanner');
+    if (lb) lb.addEventListener('click', function (e) {
+      var b = e.target && e.target.closest ? e.target.closest('[data-retry-ai]') : null;
+      if (b && !state.busy && lastAiFailedPrompt) { hideLocalBanner(); handlePrompt(lastAiFailedPrompt, { retry: true }); }
+    });
     // El ejemplo (?example=) lo carga el script inline de app.html.
   }
 
