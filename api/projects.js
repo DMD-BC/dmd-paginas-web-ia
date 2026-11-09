@@ -32,6 +32,14 @@ function publicProject(row) {
 module.exports = async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Cache-Control', 'no-store');
+  // CORS: el portal (login.dmdmx.dev) lee esta API cross-origin con la
+  // cookie de sesión. Sin estos headers el navegador bloquea la
+  // respuesta y "Mis Páginas" muestra "No se pudo contactar al builder".
+  res.setHeader('Access-Control-Allow-Origin', 'https://login.dmdmx.dev');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(204).end();
   if (!hasDb()) return noDb(res);
   try {
     const user = await getSessionUser(req);
