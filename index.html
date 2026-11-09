@@ -125,13 +125,13 @@ blockquote{margin:0;font-size:18px;line-height:1.4;letter-spacing:-.01em}
 figcaption{margin-top:18px;font-size:14px;color:var(--muted)}
 
 /* precios */
-.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:52px;align-items:stretch}
+.plans{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:52px;align-items:stretch}
 .plan{background:var(--white);border-radius:16px;padding:30px;display:flex;flex-direction:column;box-shadow:0 0 0 1px rgba(28,28,28,.06)}
 .plan.hot{background:var(--ink);color:var(--white)}
 .plan.hot .muted,.plan.hot li{color:rgba(252,251,248,.78)}
 .plan h3{font-size:18px;display:flex;justify-content:space-between;align-items:center}
 .badge{font-size:12px;font-weight:500;padding:3px 10px;border-radius:9999px;background:rgba(255,255,255,.16)}
-.price{font-size:46px;font-weight:700;letter-spacing:-.04em;margin:18px 0}
+.price{font-size:38px;font-weight:700;letter-spacing:-.04em;margin:18px 0}
 .price small{font-size:15px;font-weight:400;color:var(--muted);letter-spacing:0}
 .plan.hot .price small{color:rgba(252,251,248,.65)}
 .plan ul{list-style:none;padding:0;margin:0 0 28px;display:grid;gap:10px;flex:1}
@@ -159,6 +159,9 @@ footer h4{margin:0 0 12px;font-size:13px;font-weight:600}
 footer a{display:block;font-size:14px;color:var(--muted);padding:3px 0}footer a:hover{color:var(--ink)}
 .legal{margin-top:40px;font-size:13px;color:var(--muted)}
 
+@media(max-width:1100px){
+  .plans{grid-template-columns:repeat(2,1fr)}
+}
 @media(max-width:860px){
   .links{display:none}
   .cols3,.gallery,.steps,.quotes,.plans{grid-template-columns:1fr}
@@ -296,25 +299,31 @@ footer a{display:block;font-size:14px;color:var(--muted);padding:3px 0}footer a:
     <div class="wrap">
       <p class="eyebrow">Precios</p>
       <h2>Precios simples</h2>
-      <p class="lead">Empieza gratis. Escala cuando lo necesites.</p>
+      <p class="lead">Empieza gratis: 3 creaciones sin registro, 25 con cuenta y 50 con el código DMDMX. Escala cuando lo necesites.</p>
       <div class="plans">
         <article class="plan">
-          <h3>Free</h3>
-          <div class="price">$0<small> /mes</small></div>
-          <ul><li>5 mensajes de IA por día</li><li>Proyectos públicos</li><li>Preview compartible</li></ul>
+          <h3>Suscripción Premium</h3>
+          <div class="price">$79<small> MXN /mes</small></div>
+          <ul><li>Crea tú mismo, sin esperas</li><li>400 plantillas en 20 giros de negocio</li><li>Editor con IA ilimitado</li><li>Punto de venta y Canva DMD Pro</li><li>Sin marcas de agua</li></ul>
           <a class="btn btn-light btn-lg" href="app.html">Empezar</a>
         </article>
+        <article class="plan">
+          <h3>Emprendedor</h3>
+          <div class="price">$350<small> MXN pago único</small></div>
+          <ul><li>Logotipo vectorial (2 propuestas)</li><li>Tarjeta digital interactiva con QR</li><li>Bio Link optimizado para redes sociales</li></ul>
+          <a class="btn btn-light btn-lg" href="https://dmdmx.dev/">Contratar</a>
+        </article>
         <article class="plan hot">
-          <h3>Pro <span class="badge">Popular</span></h3>
-          <div class="price">$25<small> /mes</small></div>
-          <ul><li>100 mensajes de IA al mes</li><li>Proyectos privados</li><li>Dominio personalizado</li><li>Backend y auth</li></ul>
-          <a class="btn btn-light btn-lg" href="app.html">Elegir Pro</a>
+          <h3>PyME <span class="badge">Más Elegido</span></h3>
+          <div class="price">$1,099<small> MXN pago único</small></div>
+          <ul><li>Web $699 + Logo $250 + 500 Tarjetas $150</li><li>Dominio .com o .com.mx por 1 año</li><li>Certificado SSL y botón directo a WhatsApp</li><li>Identidad de marca completa con manual</li></ul>
+          <a class="btn btn-light btn-lg" href="https://dmdmx.dev/">Contratar</a>
         </article>
         <article class="plan">
-          <h3>Business</h3>
-          <div class="price">$50<small> /mes</small></div>
-          <ul><li>Mensajes ilimitados</li><li>Colaboración en equipo</li><li>SSO y roles</li></ul>
-          <a class="btn btn-light btn-lg" href="app.html">Contactar</a>
+          <h3>Élite</h3>
+          <div class="price">$1,499<small> MXN pago único</small></div>
+          <ul><li>Sitio web multipágina con catálogo</li><li>Dominio + 5 correos corporativos</li><li>Plantillas exclusivas en Canva DMD Pro</li><li>6 meses de soporte técnico y mantenimiento</li></ul>
+          <a class="btn btn-light btn-lg" href="https://dmdmx.dev/">Contratar</a>
         </article>
       </div>
     </div>
@@ -326,9 +335,9 @@ footer a{display:block;font-size:14px;color:var(--muted);padding:3px 0}footer a:
       <h2>Preguntas frecuentes</h2>
       <div class="faq">
         <details><summary>¿Necesito saber programar?</summary><p>No. Describes lo que quieres en lenguaje natural y la IA se encarga del código.</p></details>
-        <details><summary>¿Puedo usar mi propio dominio?</summary><p>Sí, desde el plan Pro puedes conectar un dominio personalizado.</p></details>
+        <details><summary>¿Puedo usar mi propio dominio?</summary><p>Sí. El plan PyME incluye dominio .com o .com.mx por 1 año, y el plan Élite también lo incluye con 5 correos corporativos.</p></details>
         <details><summary>¿Qué pasa con mi código?</summary><p>Es tuyo. Puedes editarlo, exportarlo y alojarlo donde prefieras.</p></details>
-        <details><summary>¿Hay un plan gratuito?</summary><p>Sí, con 5 mensajes de IA por día y sin tarjeta de crédito.</p></details>
+        <details><summary>¿Hay un plan gratuito?</summary><p>Sí, sin tarjeta de crédito: 3 creaciones sin registro, 25 con cuenta y 50 con el código DMDMX.</p></details>
       </div>
     </div>
   </section>
