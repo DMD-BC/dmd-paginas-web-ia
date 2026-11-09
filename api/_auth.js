@@ -5,12 +5,26 @@
 //   hash SHA-256. Al navegador va en cookie httpOnly (el JS no la
 //   puede leer: no hay XSS que robe la sesión desde el frontend).
 // - Cookie: httpOnly, SameSite=Lax, Path=/, 30 días, Secure en
-//   producción (Vercel es https).
+//   producción (Vercel es https). SSO DMD: cuando el host es un
+//   subdominio de dmdmx.dev (login.dmdmx.dev, crear.dmdmx.dev...),
+//   la cookie lleva Domain=.dmdmx.dev y la comparten TODOS los
+//   subdominios: iniciar sesión en login.dmdmx.dev vale también en
+//   crear.dmdmx.dev y viceversa. En local/dev (localhost, *.vercel.app)
+//   NO se pone Domain: la cookie queda host-only y sigue funcionando.
 
 const crypto = require('crypto');
 
 const SESSION_COOKIE = 'dmd_session';
 const SESSION_DAYS = 30;
+const SSO_DOMAIN = '.dmdmx.dev';
+
+// Dominio de la cookie SSO, o '' fuera de *.dmdmx.dev (local/dev).
+function cookieDomain(req) {
+  const raw = (req.headers && (req.headers['x-forwarded-host'] || req.headers.host)) || '';
+  const host = String(raw).split(',')[0].trim().toLowerCase().split(':')[0];
+  if (host === 'dmdmx.dev' || host.endsWith('.dmdmx.dev')) return SSO_DOMAIN;
+  return '';
+}
 
 function scryptHash(password) {
   const salt = crypto.randomBytes(16).toString('hex');
@@ -58,15 +72,19 @@ function isSecureRequest(req) {
 function setSessionCookie(res, token, req) {
   const maxAge = SESSION_DAYS * 24 * 60 * 60;
   const secure = isSecureRequest(req) ? '; Secure' : '';
+  const domain = cookieDomain(req);
   res.setHeader('Set-Cookie',
     SESSION_COOKIE + '=' + encodeURIComponent(token) +
-    '; HttpOnly; SameSite=Lax; Path=/; Max-Age=' + maxAge + secure);
+    '; HttpOnly; SameSite=Lax; Path=/; Max-Age=' + maxAge +
+    (domain ? '; Domain=' + domain : '') + secure);
 }
 
 function clearSessionCookie(res, req) {
   const secure = isSecureRequest(req) ? '; Secure' : '';
+  const domain = cookieDomain(req);
   res.setHeader('Set-Cookie',
-    SESSION_COOKIE + '=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0' + secure);
+    SESSION_COOKIE + '=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0' +
+    (domain ? '; Domain=' + domain : '') + secure);
 }
 
 // Devuelve el usuario de la sesión (o null). Nunca lanza por falta de DB:
@@ -145,6 +163,8 @@ function noDb(res) {
 
 module.exports = {
   SESSION_COOKIE,
+  SSO_DOMAIN,
+  cookieDomain,
   scryptHash,
   scryptVerify,
   newSessionToken,
