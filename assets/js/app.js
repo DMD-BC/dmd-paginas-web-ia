@@ -759,7 +759,8 @@
     if (et && !et.children.length) {
       [
         ['Consultora', 'consultora'], ['Reservas', 'reservas'], ['Panel de ventas', 'ventas'],
-        ['Portafolio', 'portafolio'], ['SaaS', 'saas'], ['Tienda de café', 'cafe']
+        ['Portafolio', 'portafolio'], ['SaaS', 'saas'], ['Tienda de café', 'cafe'],
+        ['Buen Fin', 'buenfin']
       ].forEach(function (pair) {
         var a = document.createElement('a');
         a.className = 'chip';
