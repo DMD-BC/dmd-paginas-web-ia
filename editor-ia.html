@@ -7,6 +7,11 @@
   <link rel="icon" type="image/png" href="assets/logo-dmd.svg">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- IA compartida con el builder: mismo backend Groq, mismas cuotas y
+       misma sesión (ApiClient + health check + cuentas del servidor). -->
+  <script src="assets/js/api-client.js"></script>
+  <script src="assets/js/llm.js"></script>
+  <script src="assets/js/usage.js"></script>
   <link rel="stylesheet" href="https://www.dmdmx.dev/style.css">
   <style>
     body {
@@ -126,11 +131,15 @@
       </button>
     </div>
 
-    <!-- ACCIONES: EXPORTAR, SUSCRIPCIÓN Y DESCARGA -->
+    <!-- ACCIONES: CUOTA, CUENTA, EXPORTAR Y DESCARGA -->
     <div class="flex items-center space-x-2">
-      <!-- Indicador de Membresía del Usuario -->
-      <button onclick="openPremiumModal()" id="user-tier-indicator" class="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition">
-        <!-- Renderizado por JS -->
+      <!-- Cuota de cambios con IA (igual que en el builder) -->
+      <span id="usagePill" class="hidden lg:inline-flex items-center px-3 py-1.5 rounded-full bg-white border border-[#e7e4dc] text-[11px] font-bold text-[#5f5f5d] whitespace-nowrap">Te quedan 3 cambios</span>
+
+      <!-- Mi cuenta: registro/login en el servidor, misma cuenta que el builder -->
+      <button id="accountBtn" class="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-[#f1eee6] text-[#1c1c1c] text-xs font-bold transition border border-[#e7e4dc]" title="Mi cuenta">
+        <span>👤</span>
+        <span id="accountLabel">Cuenta</span>
       </button>
 
       <button onclick="copyGeneratedCode()" class="px-3 py-1.5 rounded-xl bg-white hover:bg-[#f1eee6] text-[#1c1c1c] hover:text-[#1c1c1c] text-xs font-bold transition flex items-center space-x-1.5 border border-[#e7e4dc]" title="Copiar código HTML">
@@ -150,15 +159,16 @@
     </div>
   </header>
 
-  <!-- BANNER DE AVISO DE PLANTILLA PREMIUM (SI ES FREE) -->
+  <!-- BANNER DE PLANTILLA PREMIUM: ya no bloquea con un pago simulado;
+       los cambios con IA usan la misma cuota que el builder. -->
   <div id="premium-lock-banner" class="hidden bg-gradient-to-r from-amber-100 via-[#fcfbf8] to-amber-100 border-b border-amber-500/40 px-4 py-2 text-xs flex items-center justify-between text-amber-800">
     <div class="flex items-center space-x-2">
       <span class="text-base">🔒</span>
-      <span class="font-bold">Plantilla de Nivel Premium:</span>
-      <span class="hidden sm:inline">Puedes explorarla libremente. Para pedirle cambios a la IA, activa tu membresía de $79 MXN/mes.</span>
+      <span class="font-bold">Plantilla Premium:</span>
+      <span class="hidden sm:inline">tus cambios con IA usan tu cuota (<span id="premium-quota-text">te quedan 3 cambios</span>). Regístrate para tener 25.</span>
     </div>
-    <button onclick="openPremiumModal()" class="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-lg text-xs transition whitespace-nowrap active:scale-95">
-      👑 Desbloquear por $79/mes
+    <button onclick="openAccountModal()" class="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-lg text-xs transition whitespace-nowrap active:scale-95">
+      👤 Mi cuenta
     </button>
   </div>
 
@@ -169,23 +179,26 @@
     <aside class="w-full sm:w-[380px] lg:w-[420px] bg-[#fcfbf8] border-r border-[#e7e4dc] flex flex-col h-full flex-shrink-0 z-10">
       
       <!-- Cabecera del Chat con IA -->
-      <div class="p-4 border-b border-[#e7e4dc] flex items-center justify-between bg-[#fcfbf8]/90">
-        <div class="flex items-center space-x-2.5">
-          <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-[#ff8a4c] via-[#f0467f] to-[#4f7dff] flex items-center justify-center text-white text-sm shadow-md shadow-black/10">
-            🤖
-          </div>
-          <div>
-            <h2 class="text-sm font-extrabold text-[#1c1c1c] leading-tight">Copilot IA Web DMD</h2>
-            <div class="flex items-center space-x-1.5 text-[10px] text-emerald-600">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>Listo para recibir instrucciones</span>
+      <div class="p-4 border-b border-[#e7e4dc] bg-[#fcfbf8]/90 space-y-1.5">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-[#ff8a4c] via-[#f0467f] to-[#4f7dff] flex items-center justify-center text-white text-sm shadow-md shadow-black/10">
+              🤖
+            </div>
+            <div>
+              <h2 class="text-sm font-extrabold text-[#1c1c1c] leading-tight">Copilot IA Web DMD</h2>
+              <div class="flex items-center space-x-1.5 text-[10px] text-emerald-600">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Listo para recibir instrucciones</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <button onclick="resetTemplateOriginal()" class="text-[11px] text-[#5f5f5d] hover:text-[#1c1c1c] font-bold px-2 py-1 bg-white rounded-lg hover:bg-[#f1eee6] transition" title="Restaurar diseño original de la plantilla">
-          Restaurar
-        </button>
+          <button onclick="resetTemplateOriginal()" class="text-[11px] text-[#5f5f5d] hover:text-[#1c1c1c] font-bold px-2 py-1 bg-white rounded-lg hover:bg-[#f1eee6] transition" title="Restaurar diseño original de la plantilla">
+            Restaurar
+          </button>
+        </div>
+        <p id="editorUsageText" class="text-[11px] text-[#5f5f5d]">Te quedan 3 cambios gratis · regístrate para tener 25</p>
       </div>
 
       <!-- Historial de Conversación con la IA -->
@@ -203,7 +216,7 @@
             Por ejemplo: <em>"Cambia el color principal a verde esmeralda", "Cambia el nombre a Taquería El Paisa", "Pon mi WhatsApp +52 762 106 8212", "Cambia a modo oscuro", o "Agrega un 20% de descuento en el banner"</em>.
           </p>
           <p class="text-[#5f5f5d] text-[11px]">
-            Aquí el Copilot aplica los cambios al instante con su motor local (color, nombre, WhatsApp y modo oscuro). La IA con Groq vive en el builder, en local.
+            La IA Groq aplica tus cambios al instante (textos, colores, secciones, WhatsApp). Si la IA no responde, aplico el cambio con el motor local y puedes reintentarlo. Cada cambio con IA usa 1 de tu cuota.
           </p>
         </div>
       </div>
@@ -230,7 +243,7 @@
           <div class="relative">
             <textarea id="ai-user-prompt" rows="3" required
               placeholder="Escribe a la IA qué quieres cambiar de esta página..."
-              class="w-full bg-white border-2 border-[#e7e4dc] focus:border-[#1c1c1c] rounded-2xl p-3 text-xs sm:text-sm text-white placeholder-[#8a8a86] focus:outline-none transition resize-none"></textarea>
+              class="w-full bg-white border-2 border-[#e7e4dc] focus:border-[#1c1c1c] rounded-2xl p-3 text-xs sm:text-sm text-[#1c1c1c] placeholder-[#8a8a86] focus:outline-none transition resize-none"></textarea>
           </div>
 
           <button type="submit" id="btn-submit-ai"
@@ -262,47 +275,46 @@
     </main>
   </div>
 
-  <!-- MODAL DE SUSCRIPCIÓN PREMIUM CUANDO INTENTAN EDITAR PLANTILLA PRO SIN PAGAR -->
-  <div id="modal-premium-paywall" class="fixed inset-0 z-50 bg-[rgba(28,28,28,.45)] backdrop-blur-md hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 text-center text-slate-900 shadow-2xl border-2 border-amber-500 space-y-4 animate-in fade-in zoom-in-95">
-      <div class="w-16 h-16 rounded-2xl bg-amber-50 border-2 border-amber-500 text-3xl flex items-center justify-center mx-auto shadow-sm">
-        🔒
+  <!-- MODAL MI CUENTA (registro/login en el servidor, misma cuenta que el builder) -->
+  <div id="accountModal" class="fixed inset-0 z-50 bg-[rgba(28,28,28,.45)] backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 text-[#1c1c1c] shadow-2xl space-y-4" role="dialog" aria-modal="true" aria-labelledby="accTitle">
+      <div class="flex items-center justify-between">
+        <h3 id="accTitle" class="text-lg font-black">Mi cuenta</h3>
+        <button id="accClose" class="w-8 h-8 rounded-full bg-[#f1eee6] hover:bg-[#e7e4dc] font-black" aria-label="Cerrar">×</button>
       </div>
-      <div>
-        <span class="text-[10px] font-black uppercase tracking-wider px-3 py-1 bg-amber-100 text-amber-900 border border-amber-300 rounded-full">
-          Plantilla Exclusiva Premium
-        </span>
-        <h3 class="text-xl font-black text-slate-900 mt-3">Personalización con IA Bloqueada</h3>
-        <p class="text-xs text-slate-600 mt-2 leading-relaxed">
-          Esta plantilla pertenece a la colección <strong>Premium</strong>. Para que la Inteligencia Artificial aplique cambios personalizados de textos, colores, productos o catálogo, necesitas activar tu <strong>Membresía Premium DMD</strong> por solo <strong>$79 pesos al mes</strong>.
-        </p>
+      <p class="text-xs text-[#5f5f5d]" id="accUsage">Te quedan 3 cambios gratis.</p>
+      <p class="text-xs text-[#5f5f5d]" id="accDbNote">Revisando si las cuentas del servidor están conectadas…</p>
+      <p class="text-xs font-bold" id="accLogged" hidden></p>
+      <div id="accForm" class="space-y-3">
+        <label class="block" id="accNameField">
+          <span class="text-xs font-bold">Nombre</span>
+          <input id="accName" type="text" autocomplete="name" placeholder="Tu nombre" class="mt-1 w-full bg-white border-2 border-[#e7e4dc] focus:border-[#1c1c1c] rounded-xl px-3 py-2 text-sm text-[#1c1c1c] focus:outline-none" />
+        </label>
+        <label class="block">
+          <span class="text-xs font-bold">Correo</span>
+          <input id="accEmail" type="email" autocomplete="email" placeholder="tu@correo.com" class="mt-1 w-full bg-white border-2 border-[#e7e4dc] focus:border-[#1c1c1c] rounded-xl px-3 py-2 text-sm text-[#1c1c1c] focus:outline-none" />
+        </label>
+        <label class="block">
+          <span class="text-xs font-bold">Contraseña</span>
+          <input id="accPass" type="password" autocomplete="current-password" placeholder="Mínimo 4 caracteres" class="mt-1 w-full bg-white border-2 border-[#e7e4dc] focus:border-[#1c1c1c] rounded-xl px-3 py-2 text-sm text-[#1c1c1c] focus:outline-none" />
+        </label>
+        <p class="text-xs text-[#5f5f5d]" id="accStatus"></p>
+        <button id="accSubmit" class="w-full py-3 bg-[#1c1c1c] hover:bg-black text-white font-extrabold text-sm rounded-xl transition active:scale-95">Registrarme</button>
+        <p class="text-center"><button type="button" id="accToggle" class="text-xs font-bold text-[#5f5f5d] hover:text-[#1c1c1c]">¿Ya tienes cuenta? Inicia sesión</button></p>
       </div>
-
-      <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-left text-xs space-y-2">
-        <div class="flex items-center space-x-2 text-slate-700">
-          <span class="text-emerald-600 font-bold">✔</span>
-          <span>Edición ilimitada con Asistente IA en 400 plantillas</span>
-        </div>
-        <div class="flex items-center space-x-2 text-slate-700">
-          <span class="text-emerald-600 font-bold">✔</span>
-          <span>Descarga de código HTML limpio listo para publicar</span>
-        </div>
-        <div class="flex items-center space-x-2 text-slate-700">
-          <span class="text-emerald-600 font-bold">✔</span>
-          <span>Acceso a Puntos de Venta (POS) y Banners publicitarios</span>
-        </div>
+      <div id="accPromoBox" class="space-y-3 border-t border-[#e7e4dc] pt-4">
+        <label class="block">
+          <span class="text-xs font-bold">Código promocional</span>
+          <input id="accPromo" type="text" autocomplete="off" placeholder="Escribe tu código" class="mt-1 w-full bg-white border-2 border-[#e7e4dc] focus:border-[#1c1c1c] rounded-xl px-3 py-2 text-sm text-[#1c1c1c] focus:outline-none" />
+        </label>
+        <p class="text-xs text-[#5f5f5d]" id="accPromoStatus">Con un código promocional tu límite sube a 50 cambios.</p>
+        <button id="accPromoBtn" class="w-full py-2.5 bg-white border-2 border-[#1c1c1c] text-[#1c1c1c] font-extrabold text-sm rounded-xl transition active:scale-95">Aplicar código</button>
       </div>
-
-      <div class="space-y-2 pt-1">
-        <button onclick="activatePremiumSimulated()" class="w-full py-3.5 bg-[#1c1c1c] hover:bg-black text-white font-extrabold text-sm rounded-xl shadow-lg shadow-black/10 transition active:scale-95">
-          👑 Activar Membresía Premium ($79 MXN/mes)
-        </button>
-        <button onclick="closePaywallModal()" class="w-full py-2 text-xs font-bold text-slate-500 hover:text-slate-800 transition">
-          Continuar explorando en modo lectura
-        </button>
-      </div>
+      <p class="text-[11px] text-[#5f5f5d] leading-relaxed">Tu cuenta y tus proyectos se guardan en la base de datos del servidor, no solo en este navegador: al iniciar sesión en otro dispositivo verás tus páginas. Tu contraseña se guarda solo como hash en el servidor, nunca en texto claro. Sin sesión, tus 3 cambios gratis se guardan solo en este navegador.</p>
+      <button id="accLogout" class="w-full py-2 text-xs font-bold text-[#5f5f5d] hover:text-[#1c1c1c]" hidden>Cerrar sesión</button>
     </div>
   </div>
+
 
   <script>
     let activeTemplateData = null;
@@ -310,32 +322,145 @@
     let originalHTML = "";
     let isPremiumTemplate = false;
 
-    // Detectar estado de suscripción del usuario
-    function isUserSubscribed() {
-      const tier1 = localStorage.getItem("dmd_user_tier");
-      const tier2 = localStorage.getItem("pos_license_tier");
-      const tier3 = localStorage.getItem("dmd_is_premium");
-      return tier1 === "PREMIUM" || tier2 === "PREMIUM" || tier3 === "true";
+    // ---- Cuenta y cuota: MISMA que el builder (servidor + Postgres) ----
+    // Anónimo 3 cambios, registrado 25, con código promocional 50.
+    // Cada cambio con IA cobra 1. La sesión es la misma cookie del
+    // builder y de login.dmdmx.dev: una sola cuenta en todos lados.
+    let accMode = 'register';
+
+    function updateEditorUsageUI() {
+      var U = window.DMDUsage;
+      if (!U) return;
+      var pill = document.getElementById('usagePill');
+      if (pill) pill.textContent = 'Te quedan ' + U.remaining() + ' cambios';
+      var ut = document.getElementById('editorUsageText');
+      if (ut) ut.textContent = U.statusText();
+      var label = document.getElementById('accountLabel');
+      if (label) {
+        var u = U.currentUser();
+        label.textContent = u ? (u.name || u.email || 'Cuenta') : 'Cuenta';
+      }
+      var au = document.getElementById('accUsage');
+      if (au) au.textContent = U.statusText();
+      var pq = document.getElementById('premium-quota-text');
+      if (pq) pq.textContent = 'te quedan ' + U.remaining() + ' cambios';
+    }
+
+    function openAccountModal() {
+      var m = document.getElementById('accountModal');
+      if (!m) return;
+      refreshAccountModal();
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+    }
+
+    function closeAccountModal() {
+      var m = document.getElementById('accountModal');
+      if (!m) return;
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+    }
+
+    function refreshAccountModal() {
+      var U = window.DMDUsage;
+      if (!U) return;
+      var au = document.getElementById('accUsage');
+      if (au) au.textContent = U.statusText();
+      var dbNote = document.getElementById('accDbNote');
+      if (dbNote) {
+        var hasDb = !!(U.state && U.state.db);
+        dbNote.textContent = hasDb
+          ? 'Cuentas en el servidor: activas. Tu sesión y tus proyectos se guardan en la base de datos.'
+          : 'Cuentas del servidor aún no conectadas: falta DATABASE_URL en Vercel. Mientras tanto usa tus 3 cambios gratis sin registrarte.';
+      }
+      var u = U.currentUser();
+      var logged = document.getElementById('accLogged');
+      if (logged) {
+        logged.hidden = !u;
+        if (u) logged.textContent = 'Sesión: ' + u.name + ' (' + u.email + ') · cuenta del servidor';
+      }
+      var form = document.getElementById('accForm');
+      if (form) form.style.display = u ? 'none' : '';
+      var lo = document.getElementById('accLogout');
+      if (lo) lo.hidden = !u;
+      var promoBox = document.getElementById('accPromoBox');
+      if (promoBox) promoBox.style.display = '';
+      if (!u) {
+        var ps0 = document.getElementById('accPromoStatus');
+        if (ps0) ps0.textContent = 'Primero regístrate o inicia sesión para usar tu código.';
+      }
+      var submit = document.getElementById('accSubmit');
+      if (submit) {
+        submit.textContent = accMode === 'register' ? 'Registrarme' : 'Iniciar sesión';
+        submit.disabled = !(U.state && U.state.db);
+      }
+      var nameField = document.getElementById('accNameField');
+      if (nameField) nameField.style.display = accMode === 'register' ? '' : 'none';
+      var toggle = document.getElementById('accToggle');
+      if (toggle) toggle.textContent = accMode === 'register' ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate';
+    }
+
+    function initEditorAccount() {
+      var ab = document.getElementById('accountBtn');
+      if (ab) ab.addEventListener('click', openAccountModal);
+      var m = document.getElementById('accountModal');
+      if (!m) return;
+      var cb = document.getElementById('accClose');
+      if (cb) cb.addEventListener('click', closeAccountModal);
+      m.addEventListener('click', function (e) { if (e.target === m) closeAccountModal(); });
+      var toggle = document.getElementById('accToggle');
+      if (toggle) toggle.addEventListener('click', function () {
+        accMode = accMode === 'register' ? 'login' : 'register';
+        var st = document.getElementById('accStatus');
+        if (st) st.textContent = '';
+        refreshAccountModal();
+      });
+      var submit = document.getElementById('accSubmit');
+      if (submit) submit.addEventListener('click', async function () {
+        var U = window.DMDUsage;
+        if (!U) return;
+        var st = document.getElementById('accStatus');
+        if (st) st.textContent = accMode === 'register' ? 'Creando tu cuenta en el servidor…' : 'Iniciando sesión…';
+        var r = accMode === 'register'
+          ? await U.register(document.getElementById('accName').value, document.getElementById('accEmail').value, document.getElementById('accPass').value)
+          : await U.login(document.getElementById('accEmail').value, document.getElementById('accPass').value);
+        if (st) st.textContent = r.ok ? 'Listo ✓' : ('⚠️ ' + (r.error || 'Error'));
+        if (r.ok) {
+          updateEditorUsageUI();
+          setTimeout(closeAccountModal, 700);
+        }
+        refreshAccountModal();
+      });
+      var promoBtn = document.getElementById('accPromoBtn');
+      if (promoBtn) promoBtn.addEventListener('click', async function () {
+        var U = window.DMDUsage;
+        if (!U) return;
+        var ps = document.getElementById('accPromoStatus');
+        var r = await U.applyPromo(document.getElementById('accPromo').value);
+        if (ps) ps.textContent = r.ok ? '✓ Código aplicado: tu límite es 50 cambios.' : ('⚠️ ' + (r.error || 'Error'));
+        updateEditorUsageUI();
+        refreshAccountModal();
+      });
+      var lo = document.getElementById('accLogout');
+      if (lo) lo.addEventListener('click', async function () {
+        var U = window.DMDUsage;
+        if (!U) return;
+        await U.logout();
+        updateEditorUsageUI();
+        refreshAccountModal();
+        var st = document.getElementById('accStatus');
+        if (st) st.textContent = 'Sesión cerrada. Vuelves al modo anónimo.';
+      });
     }
 
     document.addEventListener("DOMContentLoaded", () => {
       loadTemplateFromStorage();
-      updateUserTierBadge();
+      initEditorAccount();
+      if (window.DMDUsage) {
+        window.DMDUsage.sync().then(updateEditorUsageUI);
+      }
       lucide.createIcons();
     });
-
-    function updateUserTierBadge() {
-      const subscribed = isUserSubscribed();
-      const btnIndicator = document.getElementById("user-tier-indicator");
-      
-      if (subscribed) {
-        btnIndicator.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-amber-500 bg-amber-100 text-amber-800 text-xs font-black shadow-xs";
-        btnIndicator.innerHTML = `<span>👑</span><span>Suscripción Premium Activa</span>`;
-      } else {
-        btnIndicator.className = "flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border border-[#1c1c1c] bg-white text-[#1c1c1c] hover:bg-black/20 text-xs font-bold transition shadow-xs";
-        btnIndicator.innerHTML = `<span>⚡</span><span>Plan Gratuito</span><span class="text-[10px] bg-[#1c1c1c] text-white px-1.5 py-0.2 rounded font-extrabold ml-1">$79/mes</span>`;
-      }
-    }
 
     function loadTemplateFromStorage() {
       let raw = localStorage.getItem("dmd_editor_template");
@@ -377,11 +502,10 @@
       if (isPremiumTemplate) {
         tierBadge.className = "text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300";
         tierBadge.innerHTML = "🔒 Premium PRO";
-
-        if (!isUserSubscribed()) {
-          lockBanner.classList.remove("hidden");
-          addChatMessage("bot", `🔒 <strong>Aviso de Licencia:</strong> Esta plantilla es de categoría <strong>Premium</strong>. Puedes visualizarla en vivo, pero para que la Inteligencia Artificial aplique cambios personalizados necesitas activar tu <strong>Membresía Premium ($79 MXN/mes)</strong>.`);
-        }
+        // La plantilla es Premium, pero ya no se bloquea con un pago
+        // simulado: los cambios con IA usan la misma cuota que el builder.
+        lockBanner.classList.remove("hidden");
+        updateEditorUsageUI();
       } else {
         tierBadge.className = "text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-300";
         tierBadge.innerHTML = "★ Gratuita";
@@ -434,30 +558,46 @@
 
       addChatMessage("user", prompt);
       input.value = "";
-
-      // 🔒 VERIFICACIÓN DE PAYWALL:
-      // Si la plantilla es Premium y el usuario NO tiene membresía pagada:
-      if (isPremiumTemplate && !isUserSubscribed()) {
-        setTimeout(() => {
-          addChatMessage("bot", `🔒 <strong>Modificación Rechazada (Suscripción Requerida):</strong><br>Esta plantilla es <strong>Premium</strong>. Para que la Inteligencia Artificial modifique el código, diseño y textos de esta plantilla, debes suscribirte a la <strong>Membresía Premium DMD ($79 MXN/mes)</strong>.`);
-          openPaywallModal();
-        }, 500);
-        return;
-      }
-
-      // Si es gratuita o el usuario es Premium, la IA aplica los cambios
-      processAIChange(prompt);
+      processAIChange(prompt, false);
     }
 
     // Reintenta el último cambio con la IA (Groq) tras un fallback local.
+    // El reintento NO cobra otro cambio (ese intento ya se cobró).
     window.DMDRetryEditorAI = function () {
-      if (window.__dmdEditorLastInstruction) processAIChange(window.__dmdEditorLastInstruction);
+      if (window.__dmdEditorLastInstruction) processAIChange(window.__dmdEditorLastInstruction, true);
     };
 
-    async function processAIChange(instruction) {
+    // Cambio con IA: MISMA IA que el builder (ApiClient + Groq en el
+    // servidor, health check, timeout de 65 s) y MISMA cuota.
+    async function processAIChange(instruction, isRetry) {
       window.__dmdEditorLastInstruction = instruction;
-      // true hasta que la IA confirme el cambio: si algo falla, el
-      // motor local avisa y ofrece reintentar con IA (P1-2).
+
+      // Fuera de alcance: NO se gasta cupo ni cambios (igual que el builder).
+      var oos = window.DMDOutOfScope;
+      if (oos && !isRetry && oos.isOutOfScope(instruction)) {
+        addChatMessage("bot", oos.message + '<br><span class="text-[#5f5f5d]">Tu plantilla no se tocó.</span>');
+        return;
+      }
+
+      // Cuota (igual que el builder): se cobra 1 cambio cuando el cambio
+      // arranca; el reintento manual tras un fallo de IA no cobra otro.
+      var U = window.DMDUsage;
+      if (U && !isRetry) {
+        try { await U.sync(); } catch (e) { /* sigue con el espejo local */ }
+        if (!U.canUse()) {
+          addChatMessage("bot", '⛔ Ya usaste tus ' + U.limit() + ' cambios' + (U.currentUser() ? '' : ' gratis') + '. Regístrate para tener ' + U.FREE_LIMIT + ' cambios por cuenta (50 con un código promocional).<br><button onclick="openAccountModal()" style="margin-top:6px;padding:6px 12px;border-radius:999px;background:#1c1c1c;color:#fff;font-weight:700;cursor:pointer">👤 Mi cuenta</button>');
+          updateEditorUsageUI();
+          return;
+        }
+        var consumed = await U.consume();
+        if (!consumed) {
+          addChatMessage("bot", '⛔ Se acabaron tus cambios (límite ' + U.limit() + '). ' + (U.currentUser() ? 'Con un código promocional llegas a 50 cambios.' : 'Regístrate para tener ' + U.FREE_LIMIT + ' cambios por cuenta (50 con un código promocional).') + '<br><button onclick="openAccountModal()" style="margin-top:6px;padding:6px 12px;border-radius:999px;background:#1c1c1c;color:#fff;font-weight:700;cursor:pointer">👤 Mi cuenta</button>');
+          updateEditorUsageUI();
+          return;
+        }
+        updateEditorUsageUI();
+      }
+
       let aiFailed = true;
       const loading = document.getElementById("ai-loading-overlay");
       const loadingText = document.getElementById("ai-loading-status");
@@ -465,38 +605,32 @@
       loading.classList.add("flex");
       loadingText.innerText = `Analizando tu solicitud con Inteligencia Artificial: "${instruction}"...`;
 
-      // 1. Intentar consultar la API de Groq en producción
-      if (window.location.protocol.startsWith("http")) {
+      // 1. IA real (Groq) con el cliente compartido del builder.
+      if (window.LLM && window.LLM.ensureReady) {
+        try { await window.LLM.ensureReady(); } catch (e) { /* sigue al local con aviso */ }
+      }
+      if (window.ApiClient && window.ApiClient.editPage) {
         try {
-          const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), 45000);
-          const response = await fetch("/api/generate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              prompt: `Modifica el código HTML de este sitio web según la instrucción del usuario: "${instruction}". Código actual:\n\n${currentHTML.slice(0, 12000)}`,
-              color: activeTemplateData ? activeTemplateData.accent : "#2563eb",
-              style: activeTemplateData && activeTemplateData.dark ? "oscuro" : "claro"
-            }),
-            signal: controller.signal
-          });
-          clearTimeout(timer);
-          if (response.ok) {
-            const resData = await response.json();
-            if (resData && resData.html && resData.html.includes("<body")) {
-              currentHTML = resData.html;
-              renderIframe(currentHTML);
-              loading.classList.add("hidden");
-              loading.classList.remove("flex");
-              aiFailed = false;
-              addChatMessage("bot", `✨ <strong>¡Cambio aplicado con IA Groq!</strong><br>He procesado tu instrucción: <em>"${instruction}"</em>.<br>Revisa los cambios en la vista previa.`);
-              return;
-            }
-          }
-        } catch(err) {
+          const res = await window.ApiClient.editPage(
+            instruction,
+            currentHTML.slice(0, 12000),
+            activeTemplateData ? activeTemplateData.accent : "#2563eb",
+            activeTemplateData && activeTemplateData.dark ? "oscuro" : "claro"
+          );
+          currentHTML = res.html;
+          renderIframe(currentHTML);
+          loading.classList.add("hidden");
+          loading.classList.remove("flex");
+          aiFailed = false;
+          updateEditorUsageUI();
+          addChatMessage("bot", `✨ <strong>¡Cambio aplicado con IA Groq!</strong><br>He procesado tu instrucción: <em>"${instruction}"</em>.<br>Revisa los cambios en la vista previa.`);
+          return;
+        } catch (err) {
           console.log("Fallback a motor semántico local:", err);
         }
       }
+
+      // 2. Motor local (igual que antes): solo color, nombre, WhatsApp y modo oscuro.
       loading.classList.remove("hidden");
       loading.classList.add("flex");
       loadingText.innerText = `Analizando tu solicitud: "${instruction}"...`;
@@ -595,31 +729,6 @@
       addChatMessage("bot", `🔄 Plantilla restaurada a su diseño original.`);
     }
 
-    // ==================== MODAL DE PAYWALL / SUSCRIPCIÓN ====================
-    function openPaywallModal() {
-      document.getElementById("modal-premium-paywall").classList.remove("hidden");
-      document.getElementById("modal-premium-paywall").classList.add("flex");
-    }
-
-    function closePaywallModal() {
-      document.getElementById("modal-premium-paywall").classList.add("hidden");
-      document.getElementById("modal-premium-paywall").classList.remove("flex");
-    }
-
-    function openPremiumModal() {
-      openPaywallModal();
-    }
-
-    function activatePremiumSimulated() {
-      localStorage.setItem("dmd_user_tier", "PREMIUM");
-      localStorage.setItem("pos_license_tier", "PREMIUM");
-      localStorage.setItem("dmd_is_premium", "true");
-      updateUserTierBadge();
-      closePaywallModal();
-      document.getElementById("premium-lock-banner").classList.add("hidden");
-      addChatMessage("bot", `🎉 <strong>¡Membresía Premium Activada con Éxito!</strong><br>Ahora tienes acceso ilimitado para pedirle a la Inteligencia Artificial cualquier modificación sobre todas las plantillas del catálogo.`);
-    }
-
     // ==================== ACCIONES: COPIAR Y DESCARGAR ====================
     function copyGeneratedCode() {
       navigator.clipboard.writeText(currentHTML).then(() => {
@@ -670,14 +779,39 @@
 </body>
 </html>`;
     }
-  </script>
-  <script src="https://www.dmdmx.dev/dmd-publisher.js"></script>
-  <script>
-    function publishCurrentWebpage() {
-      if (typeof window.openDmdPublishModal === 'function') {
-        window.openDmdPublishModal(currentHTML, activeTemplateData || {});
-      } else {
-        alert('Cargando motor de publicación...');
+    // ==================== PUBLICAR: MISMO FLUJO REAL QUE EL BUILDER ====================
+    // POST /api/publish -> https://www.dmdmx.dev/sitios/<slug> (commit real
+    // al repo oficial). El publicador anterior solo simulaba la publicación
+    // en localStorage con una URL de GitHub Pages que no existía.
+    async function publishCurrentWebpage() {
+      if (!currentHTML) {
+        addChatMessage("bot", "Primero genera o edita una página y luego podrás publicarla.");
+        return;
+      }
+      if (currentHTML.length > 500 * 1024) {
+        addChatMessage("bot", "⚠️ Esta página pesa ~" + Math.round(currentHTML.length / 1024) + " KB y el límite para publicar es 500 KB. Descárgala como archivo .html.");
+        return;
+      }
+      addChatMessage("bot", "⏳ Publicando tu página…");
+      try {
+        const res = await fetch('/api/publish', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            slug: (activeTemplateData && activeTemplateData.brand) || 'mi-pagina',
+            title: (activeTemplateData && activeTemplateData.brand) || 'Mi página',
+            html: currentHTML
+          })
+        });
+        let data = null;
+        try { data = await res.json(); } catch (e) { data = null; }
+        if (res.ok && data && data.url) {
+          addChatMessage("bot", '🎉 Tu página se está publicando y estará lista en ~1 minuto en <a href="' + data.url + '" target="_blank" rel="noopener" style="color:#2563eb;font-weight:700">' + data.url + '</a> (si al abrirla ves un error, espera un minuto y recarga).');
+        } else {
+          addChatMessage("bot", "⚠️ No se pudo publicar: " + ((data && data.error) || ('Error ' + res.status)) + ".<br>Tu página no se perdió: puedes descargarla como archivo .html.");
+        }
+      } catch (e) {
+        addChatMessage("bot", "⚠️ No se pudo publicar: sin conexión con el servidor.<br>Tu página no se perdió: puedes descargarla como archivo .html.");
       }
     }
   </script>
