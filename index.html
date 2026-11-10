@@ -114,6 +114,20 @@ h2{font-size:clamp(32px,4.4vw,52px);line-height:1.06;letter-spacing:-.04em;max-w
 .thumb-live{overflow:hidden;background:#fcfbf8}
 .thumb-live::after{display:none}
 .thumb-live iframe{border:0;display:block;width:900px;height:560px;transform-origin:0 0;pointer-events:none;background:#fff}
+    /* Checkout de planes (PROFECO): checkbox de aceptación + modales */
+    .plan-check{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--muted);line-height:1.55;margin:0 0 12px;text-align:left}
+    .plan-check input{margin-top:3px;flex:none;accent-color:#1c1c1c;width:16px;height:16px}
+    .plan-check a{color:var(--ink);text-decoration:underline}
+    .plan-cta.is-disabled{opacity:.45;pointer-events:none}
+    .dmd-modal{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(28,28,28,.55)}
+    .dmd-modal[hidden]{display:none}
+    .dmd-modal-card{background:var(--white);border-radius:20px;max-width:640px;width:100%;max-height:85vh;overflow:auto;padding:28px;box-shadow:0 24px 60px rgba(28,28,28,.3);text-align:left}
+    .dmd-modal-card h3{font-size:19px;margin-bottom:12px}
+    .dmd-modal-card h4{font-size:16px;margin:18px 0 6px}
+    .dmd-modal-card p,.dmd-modal-card li{font-size:15px;line-height:1.65;color:var(--muted)}
+    .dmd-modal-card ul{margin:0 0 0 18px}
+    .dmd-modal-close{margin-top:20px}
+
 .thumb{height:170px;position:relative}
 .thumb::after{content:"";position:absolute;left:16%;right:16%;top:26%;height:10px;border-radius:6px;background:rgba(255,255,255,.75);box-shadow:0 22px 0 -2px rgba(255,255,255,.5),0 44px 0 -2px rgba(255,255,255,.35)}
 .t1{background:linear-gradient(135deg,#ffb27a,#f0467f)}.t2{background:linear-gradient(135deg,#9bb8ff,#6a8bff)}.t3{background:linear-gradient(135deg,#ffd98a,#ff9a5c)}
@@ -310,29 +324,50 @@ footer a{display:block;font-size:14px;color:var(--muted);padding:3px 0}footer a:
       <p class="lead">Empieza gratis: 3 creaciones sin registro, 25 con cuenta y 50 con un código promocional. Escala cuando lo necesites.</p>
       <div class="plans">
         <article class="plan">
-          <h3>Suscripción Premium</h3>
+          <h3>Plan Emprendedor Pro</h3>
           <div class="price">$79<small> MXN /mes</small></div>
-          <ul><li>Crea tú mismo, sin esperas</li><li>400 plantillas en 20 giros de negocio</li><li>Editor con IA ilimitado</li><li>Punto de venta y Canva DMD Pro</li><li>Sin marcas de agua</li></ul>
-          <a class="btn btn-light btn-lg" href="app.html">Empezar</a>
-        </article>
-        <article class="plan">
-          <h3>Emprendedor</h3>
-          <div class="price">$350<small> MXN pago único</small></div>
-          <ul><li>Logotipo vectorial (2 propuestas)</li><li>Tarjeta digital interactiva con QR</li><li>Bio Link optimizado para redes sociales</li></ul>
-          <a class="btn btn-light btn-lg" href="https://dmdmx.dev/">Contratar</a>
+          <ul><li>Página web profesional en dmdmx.dev/sitios/tu-marca</li><li>Sitio corporativo básico (One-Page), Mobile-First y código limpio</li><li>Logotipo vectorial (2 propuestas) y tarjeta digital con QR</li><li>SSL forzado y botón directo a WhatsApp</li></ul>
+          <label class="plan-check"><input type="checkbox" class="plan-accept"> <span>He leído y acepto los <a href="#" data-open-terms>Términos y Condiciones de Uso</a> y el <a href="#" data-open-privacy>Aviso de Privacidad</a>. Entiendo y acepto que los planes con dominio propio personalizado (Plan PyME y Plan Élite) conllevan un compromiso de permanencia mínima de 12 meses o, en su defecto, una cuota única de liquidación e infraestructura de $350 MXN en caso de cancelación anticipada.</span></label>
+          <a class="btn btn-light btn-lg plan-cta is-disabled" href="https://dmdmx.dev/" aria-disabled="true">Activar Suscripción Mensual ($79 MXN)</a>
         </article>
         <article class="plan hot">
-          <h3>PyME <span class="badge">Más Elegido</span></h3>
-          <div class="price">$1,099<small> MXN pago único</small></div>
-          <ul><li>Web $699 + Logo $250 + 500 Tarjetas $150</li><li>Dominio .com o .com.mx por 1 año</li><li>Certificado SSL y botón directo a WhatsApp</li><li>Identidad de marca completa con manual</li></ul>
-          <a class="btn btn-light btn-lg" href="https://dmdmx.dev/">Contratar</a>
+          <h3>Plan Crecimiento PyME <span class="badge">Más Elegido</span></h3>
+          <div class="price">$189<small> MXN /mes</small></div>
+          <ul><li>Dominio propio (.com o .com.mx) incluido sin costo adicional</li><li>Sitio corporativo completo multi-sección (Inicio, Nosotros, Servicios y Contacto)</li><li>Manual de identidad de marca + Estudio Canva DMD Pro</li><li>Servidor premium, SSL oficial, velocidad optimizada y alta en Google Maps</li></ul>
+          <label class="plan-check"><input type="checkbox" class="plan-accept"> <span>He leído y acepto los <a href="#" data-open-terms>Términos y Condiciones de Uso</a> y el <a href="#" data-open-privacy>Aviso de Privacidad</a>. Entiendo y acepto que los planes con dominio propio personalizado (Plan PyME y Plan Élite) conllevan un compromiso de permanencia mínima de 12 meses o, en su defecto, una cuota única de liquidación e infraestructura de $350 MXN en caso de cancelación anticipada.</span></label>
+          <a class="btn btn-light btn-lg plan-cta is-disabled" href="https://dmdmx.dev/" aria-disabled="true">Iniciar Plan con Permanencia 12 Meses</a>
         </article>
         <article class="plan">
-          <h3>Élite</h3>
-          <div class="price">$1,499<small> MXN pago único</small></div>
-          <ul><li>Sitio web multipágina con catálogo</li><li>Dominio + 5 correos corporativos</li><li>Plantillas exclusivas en Canva DMD Pro</li><li>6 meses de soporte técnico y mantenimiento</li></ul>
-          <a class="btn btn-light btn-lg" href="https://dmdmx.dev/">Contratar</a>
+          <h3>Plan Corporativo Élite</h3>
+          <div class="price">$299<small> MXN /mes</small></div>
+          <ul><li>Dominio propio + 5 correos corporativos oficiales</li><li>Plataforma avanzada o SaaS completa (catálogos, paneles con roles, reservas/citas)</li><li>Todo lo anterior + plantillas exclusivas en Canva y Figma</li><li>Bases de datos en tiempo real, analítica visual y soporte prioritario con mantenimiento</li></ul>
+          <label class="plan-check"><input type="checkbox" class="plan-accept"> <span>He leído y acepto los <a href="#" data-open-terms>Términos y Condiciones de Uso</a> y el <a href="#" data-open-privacy>Aviso de Privacidad</a>. Entiendo y acepto que los planes con dominio propio personalizado (Plan PyME y Plan Élite) conllevan un compromiso de permanencia mínima de 12 meses o, en su defecto, una cuota única de liquidación e infraestructura de $350 MXN en caso de cancelación anticipada.</span></label>
+          <a class="btn btn-light btn-lg plan-cta is-disabled" href="https://dmdmx.dev/" aria-disabled="true">Iniciar Plan con Permanencia 12 Meses</a>
         </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt" id="permanencia">
+    <div class="wrap">
+      <p class="eyebrow">Contrato</p>
+      <h2>🔒 Cláusula de Permanencia Mínima y Garantía de Infraestructura</h2>
+      <p class="lead">Para garantizar la continuidad de tus servicios y cubrir la inversión inicial en la configuración de ingeniería y la adquisición de activos digitales a tu nombre, las suscripciones de DMD se rigen bajo los siguientes términos de permanencia:</p>
+      <div style="background:var(--white);border-radius:16px;padding:24px 28px;box-shadow:0 0 0 1px rgba(28,28,28,.06)">
+        <h3 style="font-size:17px;margin-bottom:8px">1. Períodos de Permanencia Obligatoria</h3>
+        <ul style="margin:0 0 20px 18px;line-height:1.65;font-size:15px;color:var(--muted)">
+          <li><strong style="color:var(--ink)">Plan Emprendedor Pro ($79 MXN/mes):</strong> Sin permanencia mínima. Puedes cancelar en el momento que lo desees, conservando tu acceso hasta el final de tu período pagado. Al cancelar, tu sitio en el subdominio de DMD se dará de baja automáticamente.</li>
+          <li><strong style="color:var(--ink)">Plan Crecimiento PyME ($189 MXN/mes):</strong> Permanencia obligatoria de 12 meses. Esto cubre el costo de compra y configuración de tu dominio personalizado (.com o .com.mx) por parte de nuestro equipo.</li>
+          <li><strong style="color:var(--ink)">Plan Corporativo Élite ($299 MXN/mes):</strong> Permanencia obligatoria de 12 meses. Esto cubre la compra de tu dominio, el licenciamiento y configuración de tus 5 buzones de correo corporativo oficiales, y las horas de desarrollo técnico de la plataforma.</li>
+        </ul>
+        <h3 style="font-size:17px;margin-bottom:8px">2. Política de Cancelación Anticipada (Liquidación de Activos)</h3>
+        <p style="line-height:1.65;font-size:15px;color:var(--muted);margin-bottom:8px">Si deseas dar de baja o rescindir tu suscripción en los planes PyME o Élite antes de cumplir los 12 meses reglamentarios, podrás hacerlo cubriendo una cuota única por Liquidación de Infraestructura y Liberación de Dominio:</p>
+        <ul style="margin:0 0 20px 18px;line-height:1.65;font-size:15px;color:var(--muted)">
+          <li><strong style="color:var(--ink)">Costo de Liquidación Unificado: $350 MXN (pago único).</strong></li>
+          <li><strong style="color:var(--ink)">¿Qué incluye?</strong> Al cubrir esta cuota, el contrato se da por terminado sin penalizaciones adicionales, y el equipo de DMD te transferirá la propiedad total y los accesos de tu dominio personalizado (.com o .com.mx) y cuentas de correo para que los uses con el proveedor que tú decidas.</li>
+        </ul>
+        <h3 style="font-size:17px;margin-bottom:8px">3. Renovación</h3>
+        <p style="line-height:1.65;font-size:15px;color:var(--muted);margin:0">Al cumplir los 12 meses de permanencia, tu plan pasará a una modalidad de mes con mes libre. Podrás cancelar tu suscripción en cualquier momento posterior sin costo de liquidación, decidiendo si deseas renovar el dominio con nosotros o transferirlo.</p>
       </div>
     </div>
   </section>
@@ -343,7 +378,7 @@ footer a{display:block;font-size:14px;color:var(--muted);padding:3px 0}footer a:
       <h2>Preguntas frecuentes</h2>
       <div class="faq">
         <details><summary>¿Necesito saber programar?</summary><p>No. Describes lo que quieres en lenguaje natural y la IA se encarga del código.</p></details>
-        <details><summary>¿Puedo usar mi propio dominio?</summary><p>Sí. El plan PyME incluye dominio .com o .com.mx por 1 año, y el plan Élite también lo incluye con 5 correos corporativos.</p></details>
+        <details><summary>¿Puedo usar mi propio dominio?</summary><p>Sí. El plan Crecimiento PyME incluye dominio .com o .com.mx, y el plan Corporativo Élite también lo incluye con 5 correos corporativos.</p></details>
         <details><summary>¿Qué pasa con mi código?</summary><p>Es tuyo. Puedes editarlo, exportarlo y alojarlo donde prefieras.</p></details>
         <details><summary>¿Hay un plan gratuito?</summary><p>Sí, sin tarjeta de crédito: 3 creaciones sin registro, 25 con cuenta y 50 con un código promocional.</p></details>
       </div>
@@ -413,5 +448,67 @@ footer a{display:block;font-size:14px;color:var(--muted);padding:3px 0}footer a:
 </script>
 <script src="assets/js/examples.js"></script>
 <script src="assets/js/landing-templates.js"></script>
+
+  <!-- Modales de contratación (Términos y Aviso de Privacidad) -->
+  <div class="dmd-modal" id="termsModal" hidden>
+    <div class="dmd-modal-card" role="dialog" aria-modal="true" aria-labelledby="termsTitle">
+      <h3 id="termsTitle">📋 Cláusula de Contratación Recurrente y Permanencia Mínima</h3>
+      <p>En DMD (Digital Mijma Dreams) operamos bajo una política de precios justos y transparentes. Al suscribirte a nuestros servicios de ingeniería y software, aceptas las siguientes condiciones de temporalidad y cancelación según el plan seleccionado:</p>
+      <ul>
+        <li><strong>Plan Emprendedor Pro ($79 MXN/mes):</strong> Esta suscripción es de modalidad libre mes con mes. No cuenta con plazo forzoso. Puedes solicitar la baja en cualquier momento y el servicio se interrumpirá al finalizar tu periodo pagado.</li>
+        <li><strong>Plan Crecimiento PyME ($189 MXN/mes) y Plan Corporativo Élite ($299 MXN/mes):</strong> Al incluir la adquisición de un dominio propio personalizado a tu nombre, hosting premium, configuración de correos corporativos oficiales y la asignación de horas de mano de obra directa de nuestro equipo de ingenieros para programar tu sitio profesional, estas suscripciones conllevan un compromiso de permanencia mínima de doce (12) meses a partir del primer pago.</li>
+      </ul>
+      <h4>🛑 Política de Cancelación Anticipada</h4>
+      <p>Si deseas rescindir, dar de baja o interrumpir el servicio en los planes PyME o Élite antes de cumplir los 12 meses obligatorios, podrás hacerlo en cualquier momento bajo la siguiente condición:</p>
+      <ul>
+        <li>Deberás cubrir una Cuota Única por Liquidación de Infraestructura y Liberación de Dominio de $350.00 MXN.</li>
+        <li>Al cubrir dicha cuota, DMD dará por terminado el contrato sin penalizaciones adicionales y te transferirá de inmediato la propiedad total, contraseñas y códigos de transferencia de tu dominio personalizado y cuentas de correo para que los utilices con el proveedor de tu elección.</li>
+      </ul>
+      <h4>🔄 Renovación y Continuidad</h4>
+      <p>Al completar los primeros 12 meses de tu suscripción, tu plan pasará automáticamente a una modalidad libre de mes con mes. Podrás cancelar en cualquier momento posterior sin costo de liquidación alguno.</p>
+      <button class="btn btn-dark dmd-modal-close" type="button" data-close-modal>Entendido</button>
+    </div>
+  </div>
+  <div class="dmd-modal" id="privacyModal" hidden>
+    <div class="dmd-modal-card" role="dialog" aria-modal="true" aria-labelledby="privacyTitle">
+      <h3 id="privacyTitle">Aviso de Privacidad — DMD (Digital Mijma Dreams)</h3>
+      <p><strong>Datos que recopilamos:</strong> nombre y correo electrónico que nos compartes al registrarte o contratar, así como la información necesaria para prestarte el servicio. Los datos de pago (tarjeta, etc.) los procesa directamente la pasarela de pago; DMD no almacena los datos de tu tarjeta.</p>
+      <p><strong>Finalidad:</strong> prestarte el servicio contratado (crear y publicar tu página web, gestionar tu suscripción y atenderte).</p>
+      <p><strong>Uso de tus datos:</strong> no vendemos ni compartimos tus datos con terceros con fines publicitarios.</p>
+      <p><strong>Tus derechos:</strong> puedes pedir acceso, corrección o eliminación de tus datos escribiendo a <a href="mailto:contacto@dmd.mx">contacto@dmd.mx</a>.</p>
+      <p><strong>Responsable:</strong> DMD | Digital Mijma Dreams — <a href="mailto:contacto@dmd.mx">contacto@dmd.mx</a>.</p>
+      <button class="btn btn-dark dmd-modal-close" type="button" data-close-modal>Entendido</button>
+    </div>
+  </div>
+  <script>
+  // Checkout de planes: el botón de cada plan se habilita solo al aceptar los términos.
+  (function () {
+    document.querySelectorAll('.plan').forEach(function (card) {
+      var box = card.querySelector('.plan-accept');
+      var cta = card.querySelector('.plan-cta');
+      if (!box || !cta) return;
+      box.addEventListener('change', function () {
+        cta.classList.toggle('is-disabled', !box.checked);
+        if (box.checked) cta.removeAttribute('aria-disabled'); else cta.setAttribute('aria-disabled', 'true');
+      });
+      cta.addEventListener('click', function (e) { if (!box.checked) e.preventDefault(); });
+    });
+    function openModal(id) { var m = document.getElementById(id); if (m) m.hidden = false; }
+    function closeModals() { document.querySelectorAll('.dmd-modal').forEach(function (m) { m.hidden = true; }); }
+    document.querySelectorAll('[data-open-terms]').forEach(function (a) {
+      a.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); openModal('termsModal'); });
+    });
+    document.querySelectorAll('[data-open-privacy]').forEach(function (a) {
+      a.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); openModal('privacyModal'); });
+    });
+    document.querySelectorAll('[data-close-modal]').forEach(function (b) {
+      b.addEventListener('click', closeModals);
+    });
+    document.querySelectorAll('.dmd-modal').forEach(function (m) {
+      m.addEventListener('click', function (e) { if (e.target === m) closeModals(); });
+    });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModals(); });
+  })();
+  </script>
 </body>
 </html>
