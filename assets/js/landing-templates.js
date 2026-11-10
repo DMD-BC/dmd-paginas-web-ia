@@ -23,6 +23,7 @@
       if (!ex || !ex.html) return;
       box.classList.add('thumb-live');
       var f = document.createElement('iframe');
+      f.style.pointerEvents = 'none';
       f.setAttribute('title', 'Vista previa real de ' + (ex.title || slug));
       f.setAttribute('loading', 'lazy');
       f.srcdoc = ex.html;
