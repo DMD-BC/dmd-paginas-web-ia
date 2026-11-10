@@ -1347,6 +1347,16 @@ renderSlots();renderList();`;
   /* ------------------------------------------------------------------
      6. build(spec) -> { files, preview, summary }
      ------------------------------------------------------------------ */
+  /* Marca de agua DMD en toda página generada con IA: logo circular
+     + "DMD" debajo, fija abajo a la derecha, semitransparente y suave,
+     sin bloquear clics. Snippet autocontenido (su propio <style>) para
+     que valga igual en el preview, en index.html solo, en el .zip y en
+     la página publicada. */
+  const WATERMARK_SNIPPET = "<style>.dmd-watermark{position:fixed;right:18px;bottom:16px;z-index:9999;display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:none;opacity:.42;filter:blur(.5px)}.dmd-watermark svg{display:block;width:46px;height:46px}.dmd-watermark span{font:700 11px/1 Inter,system-ui,-apple-system,\"Segoe UI\",sans-serif;letter-spacing:.22em;color:#1c1c1c}</style><div class=\"dmd-watermark\" aria-hidden=\"true\"><svg viewBox=\"0 0 512 512\" width=\"46\" height=\"46\" aria-hidden=\"true\"><defs><linearGradient id=\"dmdwmg1\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"#38bdf8\"/><stop offset=\"100%\" stop-color=\"#0284c7\"/></linearGradient><linearGradient id=\"dmdwmg2\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"#60a5fa\"/><stop offset=\"100%\" stop-color=\"#2563eb\"/></linearGradient><linearGradient id=\"dmdwmg3\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"#2563eb\"/><stop offset=\"100%\" stop-color=\"#1d4ed8\"/></linearGradient><linearGradient id=\"dmdwmg4\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\"><stop offset=\"0%\" stop-color=\"#1e40af\"/><stop offset=\"100%\" stop-color=\"#0f172a\"/></linearGradient><clipPath id=\"dmdwmclip\"><circle cx=\"256\" cy=\"256\" r=\"256\"/></clipPath></defs><g clip-path=\"url(#dmdwmclip)\"><rect width=\"512\" height=\"512\" fill=\"#ffffff\"/><g transform=\"translate(107,107)\"><rect x=\"0\" y=\"0\" width=\"138\" height=\"138\" rx=\"36\" fill=\"url(#dmdwmg1)\"/><rect x=\"160\" y=\"0\" width=\"138\" height=\"138\" rx=\"36\" fill=\"url(#dmdwmg2)\"/><rect x=\"0\" y=\"160\" width=\"138\" height=\"138\" rx=\"36\" fill=\"url(#dmdwmg3)\"/><rect x=\"160\" y=\"160\" width=\"138\" height=\"138\" rx=\"36\" fill=\"url(#dmdwmg4)\"/></g></g></svg><span>DMD</span></div>";
+  function withWatermark(html) {
+    return html.indexOf('dmd-watermark') === -1 ? html + '\n' + WATERMARK_SNIPPET : html;
+  }
+
   function build(rawSpec) {
     // El spec de Groq (objetos) y el local (strings) se normalizan aquí,
     // así ningún renderer recibe secciones que no entiende.
@@ -1366,11 +1376,12 @@ renderSlots();renderList();`;
     const heroQ = (heroSec && heroSec.imageQuery) || spec.heroImageQuery || "";
     const ogImg = (customPhotos.length ? customImageFor(heroQ, spec.title) : null) || unsplashUrl(heroQ, 1200) || unsplashUrl(spec.title, 1200) || "https://www.dmdmx.dev/assets/social/og-dmd.jpg";
     const head = `<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(spec.title)}</title><meta name="description" content="${esc(spec.tagline)}"><meta property="og:type" content="website"><meta property="og:site_name" content="DMD | Digital Mijma Dreams"><meta property="og:title" content="${esc(spec.title)}"><meta property="og:description" content="${esc(spec.tagline)}"><meta property="og:image" content="${ogImg}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="${esc(spec.title)}"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${esc(spec.title)}"><meta name="twitter:description" content="${esc(spec.tagline)}"><meta name="twitter:image" content="${ogImg}">`;
-    const indexHtml = `<!DOCTYPE html>\n<html lang="es">\n<head>\n  ${head}\n  <link rel="stylesheet" href="styles.css">\n</head>\n<body>\n${html}\n  <script src="script.js"><\/script>\n</body>\n</html>`;
+    const bodyHtml = withWatermark(html);
+    const indexHtml = `<!DOCTYPE html>\n<html lang="es">\n<head>\n  ${head}\n  <link rel="stylesheet" href="styles.css">\n</head>\n<body>\n${bodyHtml}\n  <script src="script.js"><\/script>\n</body>\n</html>`;
     const stylesCss = baseCss(spec) + "\n" + css + "\n\n@media(max-width:760px){.grid--3{grid-template-columns:1fr!important}.ft__in{grid-template-columns:1fr}}";
     const scriptJs = js || "// Sin lógica adicional";
 
-    const preview = `<!DOCTYPE html><html lang="es"><head>${head}<style>${stylesCss}</style></head><body>${html}<script>${scriptJs}<\/script></body></html>`;
+    const preview = `<!DOCTYPE html><html lang="es"><head>${head}<style>${stylesCss}</style></head><body>${bodyHtml}<script>${scriptJs}<\/script></body></html>`;
 
     return {
       files: { "index.html": indexHtml, "styles.css": stylesCss, "script.js": scriptJs },

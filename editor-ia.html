@@ -16,6 +16,7 @@
   <script src="assets/js/api-client.js"></script>
   <script src="assets/js/llm.js"></script>
   <script src="assets/js/usage.js"></script>
+  <script src="assets/js/examples.js"></script>
   <link rel="stylesheet" href="https://www.dmdmx.dev/style.css">
   <style>
     body {
@@ -97,9 +98,7 @@
       </a>
 
       <div class="flex items-center space-x-2 border-l border-[#e7e4dc] pl-3">
-        <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-[#ff8a4c] via-[#f0467f] to-[#4f7dff] flex items-center justify-center font-black text-white text-xs">
-          IA
-        </div>
+        <img src="/favicon.svg" alt="DMD" class="w-7 h-7 rounded-full">
         <div>
           <div class="flex items-center space-x-2">
             <h1 class="text-xs sm:text-sm font-black text-[#1c1c1c] tracking-wide truncate max-w-[180px] sm:max-w-xs" id="template-title">
@@ -462,6 +461,12 @@
     });
 
     function loadTemplateFromStorage() {
+      // ?template=<slug> abre esa plantilla del constructor en el editor.
+      try {
+        var q = new URLSearchParams(location.search);
+        var tslug = q.get('template');
+        if (tslug && window.DMDSetEditorTemplate) window.DMDSetEditorTemplate(tslug);
+      } catch (e) {}
       let raw = localStorage.getItem("dmd_editor_template");
       if (!raw) {
         // Plantilla por defecto de demostración
@@ -491,6 +496,7 @@
 
       isPremiumTemplate = !!activeTemplateData.isPremium;
       currentHTML = activeTemplateData.html || buildFallbackTemplateHTML(activeTemplateData.brand, activeTemplateData.accent, activeTemplateData.dark);
+      if (window.DMDWatermark) currentHTML = window.DMDWatermark.ensure(currentHTML);
       originalHTML = currentHTML;
 
       // Actualizar Título y Badge
@@ -616,7 +622,7 @@
             activeTemplateData ? activeTemplateData.accent : "#2563eb",
             activeTemplateData && activeTemplateData.dark ? "oscuro" : "claro"
           );
-          currentHTML = res.html;
+          currentHTML = window.DMDWatermark ? window.DMDWatermark.ensure(res.html) : res.html;
           renderIframe(currentHTML);
           loading.classList.add("hidden");
           loading.classList.remove("flex");
@@ -694,7 +700,7 @@
           modified = modified.replace(/color:\s*#f8fafc/gi, "color: #0f172a");
         }
 
-        currentHTML = modified;
+        currentHTML = window.DMDWatermark ? window.DMDWatermark.ensure(modified) : modified;
         renderIframe(currentHTML);
 
         loading.classList.add("hidden");

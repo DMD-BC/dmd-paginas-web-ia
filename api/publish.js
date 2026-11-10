@@ -10,6 +10,8 @@
 // Sin token, el endpoint responde 503 con el motivo real y el builder
 // sigue ofreciendo descargar el .html (no se rompe nada).
 
+const { ensureWatermark } = require('./_watermark');
+
 const OWNER = 'DMD-BC';
 const REPO = 'DMD';
 const BRANCH = 'main';
@@ -113,6 +115,8 @@ function finalizeHtml(html, slug, title) {
     '<a href="' + SITE + '" style="color:#111">www.dmdmx.dev</a></footer>';
   if (/<\/body>/i.test(out)) out = out.replace(/<\/body>/i, footer + '\n</body>');
   else out += '\n' + footer;
+  // Marca de agua DMD en toda página publicada (si aún no la trae).
+  out = ensureWatermark(out);
   return out;
 }
 

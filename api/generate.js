@@ -8,6 +8,7 @@
 
 const { generateSpec, editHtml, generateText } = require('./_groq');
 const { searchWeb, webContextBlock } = require('./_websearch');
+const { ensureWatermark } = require('./_watermark');
 
 const MAX_PROMPT_CHARS = 2000;
 const MAX_HTML_CHARS = 12000;
@@ -140,7 +141,7 @@ module.exports = async function handler(req, res) {
       }
       const out = await editHtml(instruction, html, controller.signal);
       clearTimeout(timer);
-      return res.status(200).json({ success: true, html: out.html, model: out.model });
+      return res.status(200).json({ success: true, html: ensureWatermark(out.html), model: out.model });
     }
 
     // ---- Modo texto (Contenido IA, Canva IA, POS) ----

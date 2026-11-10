@@ -110,7 +110,10 @@ h2{font-size:clamp(32px,4.4vw,52px);line-height:1.06;letter-spacing:-.04em;max-w
 /* galería */
 .gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:48px}
 .tpl{background:var(--white);border-radius:16px;overflow:hidden;box-shadow:0 0 0 1px rgba(28,28,28,.06);transition:transform .2s,box-shadow .2s}
-.tpl:hover{transform:translateY(-3px);box-shadow:0 0 0 1px rgba(28,28,28,.08),0 18px 40px -16px rgba(60,30,40,.25)}
+.tpl:hover{transform:scale(1.04);box-shadow:0 0 0 1px rgba(28,28,28,.08),0 18px 40px -16px rgba(60,30,40,.25)}
+.thumb-live{overflow:hidden;background:#fcfbf8}
+.thumb-live::after{display:none}
+.thumb-live iframe{border:0;display:block;width:900px;height:560px;transform-origin:0 0;pointer-events:none;background:#fff}
 .thumb{height:170px;position:relative}
 .thumb::after{content:"";position:absolute;left:16%;right:16%;top:26%;height:10px;border-radius:6px;background:rgba(255,255,255,.75);box-shadow:0 22px 0 -2px rgba(255,255,255,.5),0 44px 0 -2px rgba(255,255,255,.35)}
 .t1{background:linear-gradient(135deg,#ffb27a,#f0467f)}.t2{background:linear-gradient(135deg,#9bb8ff,#6a8bff)}.t3{background:linear-gradient(135deg,#ffd98a,#ff9a5c)}
@@ -198,7 +201,7 @@ footer a{display:block;font-size:14px;color:var(--muted);padding:3px 0}footer a:
 
 <header class="nav">
   <div class="nav-in">
-    <a class="brand" href="index.html" aria-label="Inicio"><img class="brand__mark" src="assets/logo-dmd.svg" alt="DMD" /><span>DMD</span><span class="brand__sub"> | paginas web</span></a>
+    <a class="brand" href="index.html" aria-label="Inicio"><img class="brand__mark" src="/favicon.svg" alt="DMD" /><span>DMD</span><span class="brand__sub"> | paginas web</span></a>
     <nav class="links" aria-label="Principal">
       <a href="#product">Producto</a><a href="#templates">Ejemplos</a><a href="editor-ia.html">Editor IA</a><a href="#pricing">Precios</a><a href="#faq">Preguntas</a>
     </nav>
@@ -262,12 +265,12 @@ footer a{display:block;font-size:14px;color:var(--muted);padding:3px 0}footer a:
       <h2>Empieza con una base profesional</h2>
       <p class="lead">Proyectos de la comunidad, listos para remezclar.</p>
       <div class="gallery">
-        <a class="tpl" href="app.html?example=consultora"><div class="thumb t1"></div><div class="m"><h3>Consultora</h3><p>Landing de servicios</p></div></a>
-        <a class="tpl" href="app.html?example=reservas"><div class="thumb t2"></div><div class="m"><h3>Reservas</h3><p>Agenda y confirmaciones</p></div></a>
-        <a class="tpl" href="app.html?example=ventas"><div class="thumb t3"></div><div class="m"><h3>Panel de ventas</h3><p>Métricas en tiempo real</p></div></a>
-        <a class="tpl" href="app.html?example=portafolio"><div class="thumb t4"></div><div class="m"><h3>Portafolio</h3><p>Muestra tu trabajo</p></div></a>
-        <a class="tpl" href="app.html?example=saas"><div class="thumb t5"></div><div class="m"><h3>SaaS</h3><p>Producto y precios</p></div></a>
-        <a class="tpl" href="app.html?example=cafe"><div class="thumb t6"></div><div class="m"><h3>Tienda de café</h3><p>Catálogo y pedidos</p></div></a>
+        <a class="tpl" href="editor-ia.html?template=consultora"><div class="thumb t1" data-example="consultora"></div><div class="m"><h3>Consultora</h3><p>Landing de servicios</p></div></a>
+        <a class="tpl" href="editor-ia.html?template=reservas"><div class="thumb t2" data-example="reservas"></div><div class="m"><h3>Reservas</h3><p>Agenda y confirmaciones</p></div></a>
+        <a class="tpl" href="editor-ia.html?template=ventas"><div class="thumb t3" data-example="ventas"></div><div class="m"><h3>Panel de ventas</h3><p>Métricas en tiempo real</p></div></a>
+        <a class="tpl" href="editor-ia.html?template=portafolio"><div class="thumb t4" data-example="portafolio"></div><div class="m"><h3>Portafolio</h3><p>Muestra tu trabajo</p></div></a>
+        <a class="tpl" href="editor-ia.html?template=saas"><div class="thumb t5" data-example="saas"></div><div class="m"><h3>SaaS</h3><p>Producto y precios</p></div></a>
+        <a class="tpl" href="editor-ia.html?template=cafe"><div class="thumb t6" data-example="cafe"></div><div class="m"><h3>Tienda de café</h3><p>Catálogo y pedidos</p></div></a>
       </div>
       <div style="margin-top:20px;background:var(--white);border-radius:16px;padding:24px 28px;box-shadow:0 0 0 1px rgba(28,28,28,.06);display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
         <div><h3 style="font-size:19px">¿Ya tienes una plantilla?</h3><p class="muted" style="margin-top:4px">Edítala con IA: cambia colores, nombre y WhatsApp sin tocar código.</p></div>
@@ -360,7 +363,7 @@ footer a{display:block;font-size:14px;color:var(--muted);padding:3px 0}footer a:
 <footer>
   <div class="wrap">
     <div class="fgrid">
-      <div><a class="brand" href="index.html" style="padding:0"><img class="brand__mark" src="assets/logo-dmd.svg" alt="DMD" /><span>DMD</span><span class="brand__sub"> | paginas web</span></a>
+      <div><a class="brand" href="index.html" style="padding:0"><img class="brand__mark" src="/favicon.svg" alt="DMD" /><span>DMD</span><span class="brand__sub"> | paginas web</span></a>
         <p class="muted" style="margin-top:12px;font-size:14px;max-width:260px">Diseño y desarrollo web con IA. Clon educativo.</p></div>
       <div><h4>Producto</h4><a href="#product">Características</a><a href="#templates">Plantillas</a><a href="editor-ia.html">Editor IA</a><a href="#pricing">Precios</a></div>
       <div><h4>Recursos</h4><a href="#faq">Docs</a><a href="app.html">Playground</a><a href="#faq">Comunidad</a></div>
@@ -408,5 +411,7 @@ footer a{display:block;font-size:14px;color:var(--muted);padding:3px 0}footer a:
   }
 })();
 </script>
+<script src="assets/js/examples.js"></script>
+<script src="assets/js/landing-templates.js"></script>
 </body>
 </html>
