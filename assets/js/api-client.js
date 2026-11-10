@@ -57,6 +57,22 @@ window.ApiClient = (function () {
   }
 
   /**
+   * Editar HTML con Groq a través del backend (Copilot del Editor IA).
+   * Mismo cliente, mismo timeout (65 s) y mismo manejo de errores que
+   * generatePage: el editor y el builder comparten la IA.
+   * @returns {Promise<{html, model}>}
+   */
+  async function editPage(instruction, html, color, style) {
+    var data = await postJson('/api/generate', {
+      prompt: 'Modifica el código HTML de este sitio web según la instrucción del usuario: "' + instruction + '". Código actual:\n\n' + html,
+      color: color || '#2563eb',
+      style: style || 'claro'
+    }, GENERATE_TIMEOUT_MS);
+    if (!data || !data.html || data.html.indexOf('<body') === -1) throw new Error('Respuesta inválida del servidor: falta html');
+    return { html: data.html, model: data.model || 'groq' };
+  }
+
+  /**
    * Health check del backend. true si responde con status ok.
    */
   async function healthCheck() {
@@ -73,5 +89,5 @@ window.ApiClient = (function () {
     }
   }
 
-  return { generatePage: generatePage, healthCheck: healthCheck };
+  return { generatePage: generatePage, editPage: editPage, healthCheck: healthCheck };
 })();
