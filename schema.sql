@@ -43,3 +43,12 @@ CREATE TABLE IF NOT EXISTS anon_usage (
   count INTEGER NOT NULL DEFAULT 0, -- cambios anónimos (límite 3 en total)
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS rate_limits (
+  bucket TEXT NOT NULL,
+  key TEXT NOT NULL,           -- SHA-256 de la IP
+  window_start TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  count INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (bucket, key)
+);
+

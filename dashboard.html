@@ -307,21 +307,21 @@ body.has-pill-nav{padding-top:72px}
   <div class="nav-in">
     <a class="brand" href="index.html" aria-label="Inicio"><img class="brand__mark" src="/favicon.svg" alt="DMD" /><span>DMD</span><span class="brand__sub"> | paginas web</span></a>
     <nav class="links" aria-label="Principal">
-      <a href="index.html#product">Producto</a><a href="index.html#templates">Ejemplos</a><a href="index.htmleditor-ia.html">Editor IA</a><a href="index.html#pricing">Precios</a><a href="index.html#faq">Preguntas</a>
+      <a href="index.html#product">Producto</a><a href="index.html#templates">Ejemplos</a><a href="editor-ia.html">Editor IA</a><a href="index.html#pricing">Precios</a><a href="index.html#faq">Preguntas</a>
     </nav>
     <div class="acts">
       <a class="btn btn-ghost" href="https://login.dmdmx.dev">Iniciar sesión</a>
-      <a class="btn btn-dark" href="index.htmlapp.html">Empezar gratis</a>
+      <a class="btn btn-dark" href="app.html">Empezar gratis</a>
       <button class="nav-toggle" id="navToggle" type="button" aria-label="Menú" aria-expanded="false" aria-controls="navDrop">☰</button>
     </div>
     <div class="nav-drop" id="navDrop" hidden>
       <a href="index.html#product">Producto</a>
       <a href="index.html#templates">Ejemplos</a>
-      <a href="index.htmleditor-ia.html">Editor IA</a>
+      <a href="editor-ia.html">Editor IA</a>
       <a href="index.html#pricing">Precios</a>
       <a href="index.html#faq">Preguntas</a>
       <a href="https://login.dmdmx.dev">Iniciar sesión</a>
-      <a class="cta-in-menu" href="index.htmlapp.html">Empezar gratis →</a>
+      <a class="cta-in-menu" href="app.html">Empezar gratis →</a>
     </div>
   </div>
 </header>
@@ -405,11 +405,9 @@ body.has-pill-nav{padding-top:72px}
     <!-- Configuration Section -->
     <div class="section">
       <h2 class="section-title">⚙️ Configuración</h2>
-      <p>Tu API key de Groq está segura en el servidor (.env), nunca se expone al navegador.</p>
+      <p>Tu API key de Groq está segura en el servidor (variables de entorno de Vercel), nunca se expone al navegador.</p>
       <div class="code-block">
-GROQ_API_KEY=gsk_tu_clave_aqui
-PORT=3000
-NODE_ENV=development
+GROQ_API_KEY=gsk_tu_clave_aqui   (Vercel > Settings > Environment Variables)
       </div>
       <p><strong>Para cambiar la clave:</strong></p>
       <ol>

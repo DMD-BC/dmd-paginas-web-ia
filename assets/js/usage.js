@@ -136,8 +136,8 @@ window.DMDUsage = (function () {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return { ok: false, error: 'Ese correo no se ve válido.' };
     }
-    if (String(password || '').length < 4) {
-      return { ok: false, error: 'La contraseña necesita al menos 4 caracteres.' };
+    if (String(password || '').length < 8) {
+      return { ok: false, error: 'La contraseña necesita al menos 8 caracteres.' };
     }
     try {
       var r = await api('/api/auth/register', {

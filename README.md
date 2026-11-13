@@ -1,25 +1,27 @@
-# DMD | paginas web — Todo estilo Lovable
+﻿# DMD | Páginas web con IA (crear.dmdmx.dev)
 
-Paquete completo en estilo Lovable original, sin el rediseño oscuro.
+Builder de páginas con IA. Frontend estático + funciones serverless de Vercel (sin framework).
 
-## Colores Lovable
-- Fondo crema `#f7f4ed`, paneles `#fcfbf8`
-- Texto `#1c1c1c`, secundario `#5f5f5d`
-- Degradado: naranja `#ff8a4c` / rosa `#f0467f` / azul `#4f7dff`
-- Botones negros en píldora, Inter
+## Estructura
+- `index.html` — landing del producto.
+- `app.html` — builder (chat + vista previa). Antes de la primera página de un negocio hace una entrevista corta al usuario.
+- `editor-ia.html` — Editor IA con Copilot para editar el HTML de una plantilla.
+- `dashboard.html` — panel de información.
+- `assets/js/` — `generator.js` (render de páginas), `image-catalog.js` (fotos), `app.js` (UI del builder), `api-client.js`/`llm.js` (cliente de la IA), `usage.js` (cuenta y cupo).
+- `api/` — `generate` (IA con Groq), `publish` (publica en GitHub), `auth/*` (registro, login, promo), `projects`, `usage`, `health`; módulos `_auth`, `_db`, `_groq`, `_ratelimit`, `_websearch`, `_watermark`.
+- `schema.sql` — tablas de Postgres (también se crean solas al primer uso).
 
-## Archivos
-- `index.html` — landing Lovable original, CSS incrustado.
-- `app.html` — builder Lovable original, con `app-lovable.css` incrustado para que se vea con color al abrirlo solo.
-- `dashboard.html` — dashboard adaptado a Lovable (antes era azul oscuro). Mismos IDs y scripts.
-- `editor-ia.html` — Editor IA de plantillas, fusionado desde la página oficial: carga la plantilla de `localStorage` (`dmd_editor_template`), la muestra en vivo y la edita con el Copilot (color, nombre, WhatsApp, modo oscuro/claro) con su motor local; permite copiar código, descargar el HTML y publicar (vía `dmd-publisher.js` de dmd-bc.vercel.app). Su interfaz está adaptada al estilo Lovable (crema, botones negros en píldora). Al cargar un ejemplo en el builder, ese ejemplo queda guardado como plantilla activa para el Editor.
+## Variables de entorno (Vercel → Settings → Environment Variables)
+| Variable | Uso |
+|---|---|
+| `GROQ_API_KEY` | IA (Groq). Obligatoria para generar con IA. |
+| `DATABASE_URL` | Postgres (Supabase/Neon): cuentas, cuota, proyectos, límites de uso. |
+| `GITHUB_TOKEN` | Publicar páginas en `dmdmx.dev/sitios/<slug>`. |
+| `PROMO_CODE` | Código promocional (sube el límite a 50 cambios). |
+| `DB_SSL_STRICT` | Opcional: `1` valida el certificado SSL de la base de datos. |
 
-## Qué no cambió
-Ningún ID, ningún script, ningún texto. `server.js`, `src/groq-adapter.js`, `assets/js/*` y `.env` se quedan igual.
+## Límites
+Anónimo 3 cambios, registrado 25, con código promo 50. Rate limit por IP guardado en Postgres (`rate_limits`).
 
-## Instalar
-Sustituye `index.html`, `app.html` y `dashboard.html` en tu carpeta clon-web de Drive por estos tres archivos, y arranca con `npm start`.
-
-## Plantillas con ejemplo
-
-Cada plantilla de la landing enlaza a `app.html?example=<slug>` (consultora, reservas, ventas, portafolio, saas, cafe) y el builder carga ese ejemplo ya construido en Preview, Código y Timeline, con etiqueta «Ejemplo» — sin necesitar Groq ni `npm start`. Escribir un prompt y pulsar Construir sigue usando el generador con Groq.
+## Desarrollo
+No hay build. Abre los `.html` con un servidor estático (`npx serve`) o despliega en Vercel; las APIs solo corren en Vercel (`vercel dev`).

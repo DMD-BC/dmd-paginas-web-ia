@@ -101,6 +101,13 @@
     var custom = customImageFor(query, alt, !isHero || customPhotos.length === 1);
     if (custom) return `<img class="${cls || "phimg"}" src="${custom}" alt="${esc(alt || "")}" loading="lazy" onerror="this.style.display='none';">`;
     const real = unsplashUrl(query, w) || unsplashUrl(alt, w);
+    // Consulta sin foto curada específica: se pide una imagen a medida
+    // (IA) y, si falla o tarda, se cae a la foto curada genérica.
+    const isGen = window.DMDImages && window.DMDImages.isGenericQuery;
+    if (real && isGen && isGen(query || alt) && !isHero) {
+      const gen = pollinationsUrl(query, alt, w || 800, h || 600);
+      if (gen) return `<img class="${cls || "phimg"}" src="${gen}" alt="${esc(alt || "")}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='${real}';">`;
+    }
     if (!real) return `<div class="${cls || "phimg"}" role="img" aria-label="${esc(alt || "")}"></div>`;
     return `<img class="${cls || "phimg"}" src="${real}" alt="${esc(alt || "")}" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none';">`;
   };
@@ -397,6 +404,48 @@
   /* ------------------------------------------------------------------
      4. Render base (CSS común + helpers de layout)
      ------------------------------------------------------------------ */
+
+  /* Estética por estilo (lo elige la IA según el negocio o el usuario):
+     tipografía y detalles. Funciona igual en PC y móvil. */
+  const STYLE_FONTS = {
+    modern:  { head: "'Inter'", weight: 700, query: "Inter:wght@400;500;600;700;800" },
+    elegant: { head: "'Playfair Display'", weight: 600, query: "Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700" },
+    warm:    { head: "'Poppins'", weight: 600, query: "Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700" },
+    minimal: { head: "'DM Sans'", weight: 600, query: "Inter:wght@400;500;600;700&family=DM+Sans:wght@500;600;700" },
+    bold:    { head: "'Poppins'", weight: 800, query: "Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800" }
+  };
+  const styleKey = (spec) => {
+    const s = String((spec && spec.style) || "").toLowerCase();
+    return STYLE_FONTS[s] ? s : "modern";
+  };
+  const fontsLink = (spec) =>
+    `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=${STYLE_FONTS[styleKey(spec)].query}&display=swap" rel="stylesheet">`;
+  const styleCss = (spec) => {
+    const k = styleKey(spec), f = STYLE_FONTS[k];
+    let extra = "";
+    if (k === "elegant") extra = ".sec__t,.hero h1{letter-spacing:-.01em}.btn{border-radius:var(--r-pill)}";
+    if (k === "warm") extra = ":root{--r:20px;--r-sm:14px}.card{box-shadow:0 8px 24px -12px rgba(0,0,0,.12)}";
+    if (k === "bold") extra = ".hero h1{text-transform:uppercase;letter-spacing:-.02em}.btn{text-transform:uppercase;letter-spacing:.04em}";
+    return `h1,h2,h3{font-family:${f.head},'Inter',system-ui,sans-serif;font-weight:${f.weight}}${extra}`;
+  };
+  /* Responsive global: tablet (2 columnas), móvil (1 columna, tipografía
+     fluida, botones táctiles, menú compacto) y pantallas grandes. */
+  const RESPONSIVE_CSS = `
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}body{overflow-x:hidden}
+img,video{max-width:100%;height:auto}.gimg__ph,.hero__ph,.phimg{object-fit:cover;width:100%}
+h1{font-size:clamp(32px,5vw,56px)}h2{font-size:clamp(24px,3.4vw,36px)}
+@media(min-width:1400px){.wrap{max-width:1200px}}
+@media(max-width:1000px){.grid--3{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:900px){.wrap{padding:0 18px}.sec{padding:52px 0}.hero{padding:64px 0 52px}}
+@media(max-width:760px){
+  .grid--3,.grid--2,.grid--4{grid-template-columns:1fr!important}
+  .sec{padding:44px 0}.sec__t{font-size:clamp(24px,7vw,30px)}
+  .nav__links,.nav__cta .btn--ghost{display:none}.nav__in{height:56px}
+  .btn{min-height:44px;justify-content:center}
+  .hero{padding:48px 0 40px}.hero .btn{width:100%;max-width:340px}
+  .cform{max-width:100%}.inp,input,textarea,select{font-size:16px}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}`;
   function baseCss(spec) {
     const dark = spec.dark;
     const bg = dark ? "#0e1014" : "#ffffff";
@@ -451,16 +500,43 @@ input,textarea,select{font:inherit}
 ::selection{background:var(--accent);color:#fff}`;
   }
 
+  /* Navegación y botones REALES: los enlaces apuntan a las secciones que
+     de verdad existen en la página; el botón principal va a WhatsApp si el
+     usuario dio su teléfono (spec.phone), o a la sección de contacto. */
+  const NAV_LABELS = { menu: "Menú", features: "Servicios", gallery: "Galería", pricing: "Precios", testimonials: "Opiniones", faq: "Preguntas", contact: "Contacto", stats: "Resultados" };
+  const navKeys = (spec) => (Array.isArray(spec.sections) ? spec.sections : []).filter((k) => typeof k === "string" && NAV_LABELS[k]).slice(0, 5);
+  const ctaInfo = (spec) => {
+    const secs = Array.isArray(spec.sections) ? spec.sections : [];
+    const phone = String(spec.phone || "").replace(/[^\d+ ()-]/g, "").trim();
+    const digits = phone.replace(/\D/g, "");
+    const wa = digits.length >= 10 && digits.length <= 15;
+    let href = "#";
+    if (wa) href = "https://wa.me/" + (digits.length === 10 ? "52" + digits : digits);
+    else if (secs.includes("contact")) href = "#contact";
+    else if (secs.includes("cta")) href = "#cta";
+    const label = String(spec.ctaLabel || "").trim().slice(0, 30) || (wa ? "Escríbenos por WhatsApp" : "Contáctanos");
+    const first = secs.find((k) => ["menu", "features", "gallery", "pricing"].includes(k));
+    const second = first ? { href: "#" + first, label: first === "menu" ? "Ver el menú" : "Ver " + NAV_LABELS[first].toLowerCase() } : null;
+    return { href, label, wa, phone, second };
+  };
+  const ctaBtn = (spec, extraCls) => {
+    const c = ctaInfo(spec);
+    return `<a class="btn${extraCls ? " " + extraCls : ""}" href="${c.href}"${c.wa ? ' target="_blank" rel="noopener"' : ""}>${esc(c.label)}</a>`;
+  };
+  // Pone id="<clave>" a la primera <section> que no lo tenga (para que el
+  // menú y los botones puedan saltar a cada sección).
+  const withSectionId = (html, key) => String(html).replace(/<section\b([^>]*)>/, (m, attrs) => /\sid=/.test(attrs) ? m : `<section${attrs} id="${key}">`);
+
   const navHtml = (spec) => `
 <header class="nav">
   <div class="wrap nav__in">
     <a class="nav__brand" href="#">${spec.logo ? `<img class="nav__logo" src="${spec.logo}" alt="Logo de ${esc(spec.title)}">` : `<span class="dot"></span>`}${esc(spec.title)}</a>
     <nav class="nav__links">
-      <a href="#features">Producto</a><a href="#pricing">Precios</a><a href="#faq">Docs</a>
+      ${navKeys(spec).map((k) => `<a href="#${k}">${NAV_LABELS[k]}</a>`).join("")}
     </nav>
-    <div class="nav__cta"><a class="btn btn--ghost" href="#">Entrar</a><a class="btn" href="#">Empezar</a></div>
+    <div class="nav__cta">${ctaBtn(spec)}</div>
   </div>
-</header>`;
+</header>${ctaInfo(spec).wa ? `<a class="wa" href="${ctaInfo(spec).href}" target="_blank" rel="noopener" aria-label="WhatsApp">💬</a>` : ""}`;
 
   const navCss = `
 .nav{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
@@ -471,7 +547,9 @@ input,textarea,select{font:inherit}
 .nav__links{display:flex;gap:20px;font-size:14px}
 .nav__links a{color:var(--muted)}
 .nav__links a:hover{color:var(--fg)}
-.nav__cta{display:flex;gap:8px}`;
+.nav__cta{display:flex;gap:8px}
+.wa{position:fixed;right:16px;bottom:16px;z-index:20;width:54px;height:54px;border-radius:50%;background:#25d366;color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+section[id]{scroll-margin-top:72px}`;
 
   // Hero: si el spec rico trae foto (heroImageQuery o sección hero),
   // se muestra la foto real; si no, el hero clásico con glow.
@@ -489,7 +567,7 @@ input,textarea,select{font:inherit}
     <h1 class="hero__t">${esc(title)}</h1>
     <p class="hero__s">${esc(sub)}</p>
     ${photo}
-    <div class="hero__cta"><a class="btn" href="#">Empezar gratis</a><a class="btn btn--ghost" href="#">Ver demo</a></div>
+    <div class="hero__cta">${ctaBtn(spec)}${ctaInfo(spec).second ? `<a class="btn btn--ghost" href="${ctaInfo(spec).second.href}">${esc(ctaInfo(spec).second.label)}</a>` : ""}</div>
   </div>
 </section>`;
   };
@@ -570,7 +648,7 @@ input,textarea,select{font:inherit}
       <article class="card plan ${i === 1 ? "plan--hl" : ""}">
         <h3>${p.name}</h3><div class="plan__p">${price}${isSub ? '<span class="muted">/mes</span>' : ""}</div>
         <ul>${p.items.map((x) => `<li>${x}</li>`).join("")}</ul>
-        <a class="btn ${i === 1 ? "" : "btn--ghost"}" style="width:100%" href="#">Elegir ${p.name}</a>
+        <a class="btn ${i === 1 ? "" : "btn--ghost"}" style="width:100%" href="${ctaInfo(spec).href}"${ctaInfo(spec).wa ? ' target="_blank" rel="noopener"' : ""}>Elegir ${p.name}</a>
       </article>`;}).join("")}
   </div>
 </div></section>`;
@@ -702,7 +780,7 @@ input,textarea,select{font:inherit}
 <section class="sec cta"><div class="wrap">
   <h2 class="sec__t">${esc(title)}</h2>
   ${sub ? `<p class="sec__s muted">${esc(sub)}</p>` : ""}
-  <div class="hero__cta"><a class="btn" href="#">Empezar ahora</a></div>
+  <div class="hero__cta">${ctaBtn(spec)}</div>
 </div></section>`;
   };
   const ctaCss = `.cta{text-align:center;background:var(--surface)}.cta .sec__s{max-width:520px;margin:8px auto 0}`;
@@ -711,12 +789,11 @@ input,textarea,select{font:inherit}
 <footer class="ft"><div class="wrap ft__in">
   <div><strong>${esc(spec.title)}</strong><p class="muted" style="margin-top:6px;font-size:14px">${esc(spec.tagline)}</p></div>
   <div class="ft__cols">
-    <div><h4>Producto</h4><a href="#">Features</a><a href="#">Precios</a></div>
-    <div><h4>Empresa</h4><a href="#">Nosotros</a><a href="#">Contacto</a></div>
-    <div><h4>Legal</h4><a href="#">Privacidad</a><a href="#">Términos</a></div>
+    ${navKeys(spec).length ? `<div><h4>Secciones</h4>${navKeys(spec).map((k) => `<a href="#${k}">${NAV_LABELS[k]}</a>`).join("")}</div>` : ""}
+    <div><h4>Contacto</h4>${ctaInfo(spec).phone ? `<a href="${ctaInfo(spec).wa ? ctaInfo(spec).href : "#"}">${esc(ctaInfo(spec).phone)}</a>` : ""}${spec.hours ? `<a>${esc(String(spec.hours).slice(0, 60))}</a>` : ""}${spec.city ? `<a>${esc(String(spec.city).slice(0, 60))}</a>` : ""}${!ctaInfo(spec).phone && !spec.hours && !spec.city ? `<a href="${ctaInfo(spec).href}">Escríbenos</a>` : ""}</div>
   </div>
 </div><div class="wrap muted" style="padding-top:16px;font-size:13px">© 2026 ${esc(spec.title)}. Generado con IA.</div></footer>`;
-  const footerCss = `.ft{border-top:1px solid var(--border);padding:40px 0 24px;margin-top:20px}.ft__in{display:grid;grid-template-columns:1.4fr 2fr;gap:32px}.ft__cols{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}.ft__cols h4{margin:0 0 10px;font-size:14px}.ft__cols a{display:block;font-size:14px;color:var(--muted);padding:3px 0}`;
+  const footerCss = `.ft{border-top:1px solid var(--border);padding:40px 0 24px;margin-top:20px}.ft__in{display:grid;grid-template-columns:1.4fr 2fr;gap:32px}.ft__cols{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}.ft__cols h4{margin:0 0 10px;font-size:14px}.ft__cols a{display:block;font-size:14px;color:var(--muted);padding:3px 0}`;
 
   /* ------------------------------------------------------------------
      5. Templates por tipo de app
@@ -743,7 +820,7 @@ input,textarea,select{font:inherit}
     }
     spec.sections.forEach((k) => {
       if (build[k]) {
-        html += build[k][0](spec);
+        html += withSectionId(build[k][0](spec), k);
         css += build[k][1];
       }
     });
@@ -872,7 +949,7 @@ document.querySelectorAll('.add').forEach(f=>f.onsubmit=e=>{e.preventDefault();c
   <div class="grid grid--3">${["Marca personal", "App móvil", "Sitio corporativo", "Identidad visual", "Campaña", "Editorial"]
     .map((t) => `<article class="card work"><div class="thumb"></div><h3>${t}</h3><p class="muted">Diseño · 2026</p></article>`).join("")}</div>
   <h2 class="pf__t">Contacto</h2>
-  <div class="card ct"><p class="muted">¿Trabajamos juntos?</p><a class="btn" href="#">Escríbeme</a></div>
+  <div class="card ct"><p class="muted">¿Trabajamos juntos?</p>${ctaBtn(spec)}</div>
 </section>`;
     const css = `.pf{max-width:1000px;margin:0 auto;padding:56px 24px}
 .pf__h{display:flex;align-items:center;gap:18px;margin-bottom:40px}
@@ -1375,10 +1452,10 @@ renderSlots();renderList();`;
     const heroSec = richSec(spec, "hero");
     const heroQ = (heroSec && heroSec.imageQuery) || spec.heroImageQuery || "";
     const ogImg = (customPhotos.length ? customImageFor(heroQ, spec.title) : null) || unsplashUrl(heroQ, 1200) || unsplashUrl(spec.title, 1200) || "https://www.dmdmx.dev/assets/social/og-dmd.jpg";
-    const head = `<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${esc(spec.title)}</title><meta name="description" content="${esc(spec.tagline)}"><meta property="og:type" content="website"><meta property="og:site_name" content="DMD | Digital Mijma Dreams"><meta property="og:title" content="${esc(spec.title)}"><meta property="og:description" content="${esc(spec.tagline)}"><meta property="og:image" content="${ogImg}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="${esc(spec.title)}"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${esc(spec.title)}"><meta name="twitter:description" content="${esc(spec.tagline)}"><meta name="twitter:image" content="${ogImg}">`;
+    const head = `<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="${spec.accent}">${fontsLink(spec)}<title>${esc(spec.title)}</title><meta name="description" content="${esc(spec.tagline)}"><meta property="og:type" content="website"><meta property="og:site_name" content="DMD | Digital Mijma Dreams"><meta property="og:title" content="${esc(spec.title)}"><meta property="og:description" content="${esc(spec.tagline)}"><meta property="og:image" content="${ogImg}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="${esc(spec.title)}"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${esc(spec.title)}"><meta name="twitter:description" content="${esc(spec.tagline)}"><meta name="twitter:image" content="${ogImg}">`;
     const bodyHtml = withWatermark(html);
     const indexHtml = `<!DOCTYPE html>\n<html lang="es">\n<head>\n  ${head}\n  <link rel="stylesheet" href="styles.css">\n</head>\n<body>\n${bodyHtml}\n  <script src="script.js"><\/script>\n</body>\n</html>`;
-    const stylesCss = baseCss(spec) + "\n" + css + "\n\n@media(max-width:760px){.grid--3{grid-template-columns:1fr!important}.ft__in{grid-template-columns:1fr}}";
+    const stylesCss = baseCss(spec) + "\n" + css + "\n" + styleCss(spec) + "\n\n@media(max-width:760px){.ft__in{grid-template-columns:1fr}}" + RESPONSIVE_CSS;
     const scriptJs = js || "// Sin lógica adicional";
 
     const preview = `<!DOCTYPE html><html lang="es"><head>${head}<style>${stylesCss}</style></head><body>${bodyHtml}<script>${scriptJs}<\/script></body></html>`;

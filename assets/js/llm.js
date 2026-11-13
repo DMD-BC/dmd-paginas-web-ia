@@ -80,7 +80,6 @@ window.LLM = (function() {
    */
   function setEnabled(enabled) {
     config.enabled = enabled;
-    console.log(`[LLM] IA backend ${enabled ? '✅ habilitada' : '❌ deshabilitada'}`);
   }
 
   /**
@@ -113,7 +112,6 @@ window.LLM = (function() {
         config.enabled = healthy;
 
         if (healthy) {
-          console.log('✅ Backend Groq disponible y activo');
         } else {
           console.warn('⚠️ Backend Groq no responde, usando generador local');
         }

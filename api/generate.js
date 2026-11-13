@@ -7,6 +7,8 @@
 // entorno de Vercel). Jamás se devuelve ni se registra.
 
 const { generateSpec, editHtml, generateText } = require('./_groq');
+const { clientIp, readBody } = require('./_auth');
+const { rateLimited } = require('./_ratelimit');
 const { searchWeb, webContextBlock } = require('./_websearch');
 const { ensureWatermark } = require('./_watermark');
 
@@ -19,43 +21,6 @@ const GROQ_TIMEOUT_MS = 50000;
 // El límite real lo ponen el cupo y los rate limits del propio Groq.
 const RATE_WINDOW_MS = 10 * 60 * 1000;
 const RATE_MAX = 10;
-const hits = new Map();
-
-function clientIp(req) {
-  const fwd = req.headers['x-forwarded-for'];
-  if (typeof fwd === 'string' && fwd) return fwd.split(',')[0].trim();
-  return (req.socket && req.socket.remoteAddress) || 'unknown';
-}
-
-function rateLimited(ip) {
-  const now = Date.now();
-  if (hits.size > 1000) {
-    for (const [k, v] of hits) {
-      if (!v.some((t) => now - t < RATE_WINDOW_MS)) hits.delete(k);
-    }
-  }
-  const list = (hits.get(ip) || []).filter((t) => now - t < RATE_WINDOW_MS);
-  if (list.length >= RATE_MAX) {
-    hits.set(ip, list);
-    return true;
-  }
-  list.push(now);
-  hits.set(ip, list);
-  return false;
-}
-
-function readBody(req) {
-  if (!req.body) return {};
-  if (typeof req.body === 'object') return req.body;
-  if (typeof req.body === 'string') {
-    try {
-      return JSON.parse(req.body);
-    } catch (e) {
-      return {};
-    }
-  }
-  return {};
-}
 
 // Extrae el HTML embebido en el prompt del Copilot del Editor IA
 // ("Modifica el código HTML ... Código actual:\n\n<html...>").
@@ -101,7 +66,7 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Método no permitido, usa POST' });
   }
 
-  if (rateLimited(clientIp(req))) {
+  if (await rateLimited('generate', clientIp(req), RATE_MAX, RATE_WINDOW_MS)) {
     return res.status(429).json({
       error: 'Demasiadas solicitudes, espera unos minutos e inténtalo de nuevo'
     });

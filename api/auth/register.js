@@ -24,8 +24,8 @@ module.exports = async function handler(req, res) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return res.status(400).json({ error: 'Ese correo no se ve válido.' });
   }
-  if (password.length < 4) {
-    return res.status(400).json({ error: 'La contraseña necesita al menos 4 caracteres.' });
+  if (password.length < 8) {
+    return res.status(400).json({ error: 'La contraseña necesita al menos 8 caracteres.' });
   }
   try {
     const existing = await query('SELECT id FROM users WHERE LOWER(email) = $1', [email]);

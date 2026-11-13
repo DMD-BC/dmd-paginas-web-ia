@@ -17,7 +17,8 @@ module.exports = async function handler(req, res) {
   try {
     const user = await getSessionUser(req);
     if (!user) return res.status(401).json({ error: 'Primero regístrate o inicia sesión para usar el código.' });
-    if (code !== 'DMDMX') {
+    const expected = String(process.env.PROMO_CODE || '').replace(/\s+/g, '').toUpperCase();
+    if (!expected || code !== expected) {
       return res.status(400).json({ error: 'Ese código no es válido. Revisa el código e inténtalo de nuevo.' });
     }
     const updated = await query(

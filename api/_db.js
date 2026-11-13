@@ -28,7 +28,7 @@ function getPool() {
     const { Pool } = require('pg');
     pool = new Pool({
       connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false },
+      ssl: { rejectUnauthorized: process.env.DB_SSL_STRICT === '1' }, // pon DB_SSL_STRICT=1 en Vercel para validar el certificado
       max: 2,
       idleTimeoutMillis: 10000,
       connectionTimeoutMillis: 5000
@@ -74,6 +74,13 @@ CREATE TABLE IF NOT EXISTS anon_usage (
   ip_hash TEXT PRIMARY KEY,
   count INTEGER NOT NULL DEFAULT 0,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS rate_limits (
+  bucket TEXT NOT NULL,
+  key TEXT NOT NULL,           
+  window_start TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  count INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (bucket, key)
 );
 `;
 

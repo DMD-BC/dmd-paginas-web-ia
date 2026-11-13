@@ -14,6 +14,9 @@ const FALLBACK_MODEL = 'openai/gpt-oss-20b';
 // salón, la solución es una key con más cupo o turnos, no bajar de modelo.
 const MAX_TOKENS = 4096;
 const TEMPERATURE = 0.7;
+const SPEC_OPTS = { json: true, effort: 'low', temperature: 0.7 };
+const TEXT_OPTS = { json: true, effort: 'low', temperature: 0.7 };
+const EDIT_OPTS = { effort: 'low', temperature: 0.2 };
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 /**
@@ -34,6 +37,12 @@ sin texto antes ni después). Estructura exacta:
   "tagline": "Eslogan específico y atractivo, en español",
   "accent": "#color_hex",
   "dark": false,
+  "phone": "solo si el usuario dio su teléfono/WhatsApp",
+  "ctaLabel": "Texto corto del botón principal, ej. Pedir por WhatsApp",
+  "city": "solo si el usuario dio ciudad o zona",
+  "hours": "solo si el usuario dio horario",
+  "style": "modern|elegant|warm|minimal|bold",
+  "theme": "soft|glass|brutal|",
   "brand": "Nombre corto de la marca",
   "heroImageQuery": "wood fired pizza margherita",
   "sections": [
@@ -104,6 +113,47 @@ REGLAS DURAS (si las rompes, la página sale mal):
     ofrece cada una) para que tu página esté al nivel de una página real
     viable, con secciones y contenido al nivel de esas referencias; NUNCA
     copies sus textos, marcas, imágenes ni precios.
+
+11. CALIDAD DE REDACCIÓN: títulos cortos (máx. 8 palabras) y con beneficio
+    concreto; "content" de 1 a 2 frases (máx. 220 caracteres); descripciones
+    de items de 1 frase (máx. 140 caracteres). Mismo tono de marca en toda
+    la página, sin repetir ideas ni frases entre secciones.
+12. VARIEDAD: no repitas el mismo tipo de sección (salvo "gallery" o "form"
+    si hace falta). Cada item de una lista debe ser distinto. Los
+    "imageQuery" son específicos y todos diferentes entre sí (sujeto +
+    ambiente, ej. "barista pouring latte art"), nunca "business" ni "team".
+13. LLAMADA A LA ACCIÓN: el hero y el cta cierran con una acción concreta
+    del giro (reservar, cotizar, pedir por WhatsApp, agendar cita), no con
+    "Contáctanos" genérico. El "accent" debe tener buen contraste con
+    texto blanco encima.
+14. PRIORIDAD DEL USUARIO: si el usuario pidió un nombre, colores, estilo,
+    secciones o tono concretos, respétalos exactamente por encima de
+    cualquier otra regla de estilo.
+15. DATOS DEL NEGOCIO: si el mensaje incluye "DATOS DEL NEGOCIO (dados por
+    el usuario)", esa es la fuente de verdad. Usa el nombre EXACTO, la
+    ciudad, los productos/servicios, el público, el diferencial, el
+    horario y el teléfono/WhatsApp tal cual los dio (esos datos SÍ son
+    reales, no los reemplaces por marcadores). Lo que el usuario no dio
+    sigue como marcador. Orienta el CTA al objetivo que indicó.
+16. ESTÉTICA: elige "style" según el negocio y el tono pedido: "elegant"
+    (restaurantes finos, bodas, joyería, despachos), "warm" (panaderías,
+    cafés, comida casera, florerías), "minimal" (consultoras, arquitectura,
+    salud), "bold" (gimnasios, barberías, juvenil, eventos), "modern" (tech,
+    servicios, tiendas). "theme": "soft" para estilo cálido/redondeado,
+    "glass" solo con "dark": true, "brutal" solo si el usuario lo pide;
+    si dudas deja "". Si el usuario dio colores, "accent" debe ser el hex
+    más cercano. La página se verá en móvil y en PC: textos cortos y
+    secciones que se lean bien en pantalla chica.
+17. IMÁGENES: TODO item de "menu", "features", "pricing" (productos) y
+    "gallery" debe llevar su "imageQuery" propio en inglés, específico y
+    distinto (sujeto + detalle visual). El hero y cada sección con foto
+    llevan "imageQuery".
+18. BOTONES Y CONTACTO: "ctaLabel" es la acción principal del negocio en
+    2-4 palabras (Pedir por WhatsApp, Reservar mesa, Agendar cita, Cotizar
+    ahora, Ver catálogo). Llena "phone", "city" y "hours" SOLO con datos que
+    el usuario escribió; si no los dio, omite esos campos (nunca marcadores
+    ni inventes). Incluye siempre una sección "contact" si hay teléfono,
+    dirección u horario.
 
 EJEMPLO de nivel esperado (para "una página de una pizzería"):
 {
@@ -239,6 +289,43 @@ function sanitizeSpec(spec) {
     })
     .filter((s) => s.title || (s.items && s.items.length) || s.content);
 
+  // Normalización: acento válido, sin secciones/items duplicados, hero
+  // primero y cta/footer al final (el renderer espera ese orden).
+  if (!/^#[0-9a-f]{6}$/i.test(String(spec.accent || ''))) spec.accent = '#4f7dff';
+  const digits = String(spec.phone || '').replace(/\D/g, '');
+  if (digits.length < 10 || digits.length > 15 || /1234|9876/.test(digits)) delete spec.phone;
+  else spec.phone = String(spec.phone).replace(/[^\d+ ()-]/g, '').trim();
+  ['ctaLabel', 'city', 'hours'].forEach((k) => {
+    const v = cleanText(spec[k]);
+    if (!v || /\[|\]|tu direcci|tu tel/i.test(v) || isForbidden(v)) delete spec[k];
+    else spec[k] = scrubInventedContact(v).slice(0, 80);
+  });
+  if (!['modern','elegant','warm','minimal','bold'].includes(spec.style)) spec.style = 'modern';
+  if (!['soft','glass','brutal'].includes(spec.theme) || (spec.theme === 'glass' && !spec.dark)) delete spec.theme;
+  const seenType = new Set();
+  spec.sections = spec.sections.filter((s) => {
+    const multi = s.type === 'gallery' || s.type === 'form';
+    if (!multi && seenType.has(s.type)) return false;
+    seenType.add(s.type);
+    return true;
+  });
+  spec.sections.forEach((s) => {
+    const seen = new Set();
+    s.items = (s.items || []).filter((it) => {
+      const k = it.name.toLowerCase();
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+  });
+  const hi = spec.sections.findIndex((s) => s.type === 'hero');
+  if (hi > 0) spec.sections.unshift(spec.sections.splice(hi, 1)[0]);
+  const tail = spec.sections.filter((s) => s.type === 'cta' || s.type === 'footer');
+  if (tail.length) {
+    spec.sections = spec.sections.filter((s) => s.type !== 'cta' && s.type !== 'footer')
+      .concat(tail.sort((a, b) => (a.type === 'footer') - (b.type === 'footer')));
+  }
+
   if (spec.sections.length === 0) {
     throw new Error('Spec inválido: todas las secciones eran genéricas o vacías');
   }
@@ -282,28 +369,53 @@ function groqError(status, text) {
   return err;
 }
 
-async function callGroq(model, messages, signal, maxTokens) {
+// opts: { json: true } pide JSON válido al modelo; { temperature }; { effort }
+// (razonamiento bajo = respuestas más rápidas y sin gastar tokens "pensando").
+// Si el modelo/endpoint rechaza esos parámetros (400) se reintenta sin ellos,
+// y los errores 5xx de Groq se reintentan una vez tras una pausa corta.
+async function callGroq(model, messages, signal, maxTokens, opts) {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     const err = new Error('GROQ_API_KEY no configurada en el servidor');
     err.status = 503;
     throw err;
   }
-  const res = await fetch(GROQ_URL, {
+  opts = opts || {};
+  const payload = {
+    model,
+    max_tokens: maxTokens || MAX_TOKENS,
+    temperature: typeof opts.temperature === 'number' ? opts.temperature : TEMPERATURE,
+    messages
+  };
+  if (opts.json) payload.response_format = { type: 'json_object' };
+  if (opts.effort) payload.reasoning_effort = opts.effort;
+
+  const send = (body) => fetch(GROQ_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: 'Bearer ' + apiKey,
       'User-Agent': 'groq-sdk/0.4.0'
     },
-    body: JSON.stringify({
-      model,
-      max_tokens: maxTokens || MAX_TOKENS,
-      temperature: TEMPERATURE,
-      messages
-    }),
+    body: JSON.stringify(body),
     signal
   });
+
+  let res = await send(payload);
+  if (res.status === 400 && (payload.response_format || payload.reasoning_effort)) {
+    const t = await res.text().catch(() => '');
+    if (/response_format|reasoning_effort|json/i.test(t)) {
+      delete payload.response_format;
+      delete payload.reasoning_effort;
+      res = await send(payload);
+    } else {
+      throw groqError(400, t);
+    }
+  }
+  if (res.status >= 500) {
+    await new Promise((r) => setTimeout(r, 800));
+    res = await send(payload);
+  }
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     // 429 = cupo/límite de Groq: se propaga tal cual para que el frontend
@@ -316,7 +428,6 @@ async function callGroq(model, messages, signal, maxTokens) {
     : '';
   return { content, model: data.model || model };
 }
-
 /**
  * Genera un spec de página con Groq. Intenta con gpt-oss-120b y, solo si
  * ese modelo ya no existe, reintenta una vez con gpt-oss-20b.
@@ -341,11 +452,11 @@ async function generateSpec(prompt, previousSpec, signal, webContext) {
   let result;
   let modelUsed = PRIMARY_MODEL;
   try {
-    result = await callGroq(PRIMARY_MODEL, messages, signal);
+    result = await callGroq(PRIMARY_MODEL, messages, signal, MAX_TOKENS, SPEC_OPTS);
   } catch (error) {
     if (isModelNotFound(error)) {
       modelUsed = FALLBACK_MODEL;
-      result = await callGroq(FALLBACK_MODEL, messages, signal);
+      result = await callGroq(FALLBACK_MODEL, messages, signal, MAX_TOKENS, SPEC_OPTS);
     } else {
       throw error;
     }
@@ -356,7 +467,7 @@ async function generateSpec(prompt, previousSpec, signal, webContext) {
   try {
     spec = sanitizeSpec(parseSpec(result.content));
   } catch (e) {
-    const retry = await callGroq(modelUsed, messages, signal);
+    const retry = await callGroq(modelUsed, messages, signal, MAX_TOKENS, SPEC_OPTS);
     spec = sanitizeSpec(parseSpec(retry.content));
     result = retry;
   }
@@ -382,11 +493,11 @@ async function editHtml(instruction, html, signal) {
   let result;
   let modelUsed = PRIMARY_MODEL;
   try {
-    result = await callGroq(PRIMARY_MODEL, messages, signal, 8192);
+    result = await callGroq(PRIMARY_MODEL, messages, signal, 8192, EDIT_OPTS);
   } catch (error) {
     if (isModelNotFound(error)) {
       modelUsed = FALLBACK_MODEL;
-      result = await callGroq(FALLBACK_MODEL, messages, signal, 8192);
+      result = await callGroq(FALLBACK_MODEL, messages, signal, 8192, EDIT_OPTS);
     } else {
       throw error;
     }
@@ -394,7 +505,7 @@ async function editHtml(instruction, html, signal) {
   let out = cleanHtml(result.content);
   if (!isValidHtml(out)) {
     // Un reintento con una muestra nueva suele bastar.
-    const retry = await callGroq(modelUsed, messages, signal, 8192);
+    const retry = await callGroq(modelUsed, messages, signal, 8192, EDIT_OPTS);
     out = cleanHtml(retry.content);
     result = retry;
   }
@@ -419,11 +530,11 @@ async function generateText(prompt, signal, webContext) {
   let result;
   let modelUsed = PRIMARY_MODEL;
   try {
-    result = await callGroq(PRIMARY_MODEL, messages, signal, 2048);
+    result = await callGroq(PRIMARY_MODEL, messages, signal, 2048, TEXT_OPTS);
   } catch (error) {
     if (isModelNotFound(error)) {
       modelUsed = FALLBACK_MODEL;
-      result = await callGroq(FALLBACK_MODEL, messages, signal, 2048);
+      result = await callGroq(FALLBACK_MODEL, messages, signal, 2048, TEXT_OPTS);
     } else {
       throw error;
     }
@@ -432,7 +543,7 @@ async function generateText(prompt, signal, webContext) {
   try {
     out = parseSpec(result.content);
   } catch (e) {
-    const retry = await callGroq(modelUsed, messages, signal, 2048);
+    const retry = await callGroq(modelUsed, messages, signal, 2048, TEXT_OPTS);
     out = parseSpec(retry.content);
     result = retry;
   }

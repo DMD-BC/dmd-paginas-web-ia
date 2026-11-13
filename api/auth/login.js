@@ -4,7 +4,9 @@
 // carga DESDE LA DB los proyectos de esa cuenta (api/projects).
 // Sin DATABASE_URL -> 503 db:false.
 const { hasDb, query } = require('../_db');
-const { scryptVerify, createSession, setSessionCookie, readBody, quotaOf, noDb } = require('../_auth');
+const { rateLimited } = require('../_ratelimit');
+const { scryptVerify, createSession, setSessionCookie, readBody, quotaOf, noDb, clientIp } = require('../_auth');
+
 
 module.exports = async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json');
@@ -19,6 +21,10 @@ module.exports = async function handler(req, res) {
   const password = String(body.password || '');
   if (!email || !password) {
     return res.status(400).json({ error: 'Escribe tu correo y tu contraseña.' });
+  }
+  const ip = clientIp(req);
+  if (await rateLimited('login', ip, 20, 15 * 60 * 1000)) {
+    return res.status(429).json({ error: 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.' });
   }
   try {
     const found = await query(

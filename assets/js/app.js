@@ -839,7 +839,7 @@
 
     // Al reintentar no se duplica el mensaje del usuario: ya está en el chat.
     var isRetry = !!(opts && opts.retry);
-    if (!isRetry) addMsg('user', 'Tú', prompt);
+    if (!isRetry && !(opts && opts.skipEcho)) addMsg('user', 'Tú', prompt);
 
     // Fuera de alcance: NO se gasta cupo ni cambios. Mensaje exacto
     // pedido por Axel + botón para descargar los archivos (.zip).
@@ -935,6 +935,11 @@
       spec.uploadedPhotos = state.attachments.photos.map(function (p) { return { name: p.name, dataUrl: p.dataUrl }; });
     }
     if (state.attachments.logo) spec.logo = state.attachments.logo.dataUrl;
+    // Datos de contacto dados en la entrevista: valen más que lo que devuelva la IA.
+    if (state.pendingContact) {
+      ['phone', 'hours', 'city'].forEach(function (k) { if (state.pendingContact[k]) spec[k] = state.pendingContact[k]; });
+      state.pendingContact = null;
+    }
     renderSteps(agentEl, stepsStates(3, 2));
     try {
       render(spec, usedAI ? 'IA Groq' : 'generador local');
@@ -1062,6 +1067,86 @@
     });
   }
 
+  /* ---------------- entrevista del negocio ----------------
+     Antes de la PRIMERA generación de una página de negocio, la IA le
+     hace unas preguntas al usuario (nombre, qué ofrece, ciudad,
+     contacto, estilo…). Las respuestas viajan en el prompt como
+     "DATOS DEL NEGOCIO" y la IA se guía por ellas (nombre exacto,
+     teléfono real, estilo/colores, objetivo). Se puede omitir. */
+  var INTERVIEW_TYPES = { landing: 1, ecommerce: 1, portfolio: 1, bookings: 1 };
+
+  function shouldInterview(text) {
+    var t = String(text || '').trim();
+    if (state.busy || t.length < 3 || t.length > 350) return false;
+    if (state.spec && state.spec.sections && state.spec.sections.length) return false;
+    if (document.querySelector('[data-iv-form]')) return false;
+    var oos = window.DMDOutOfScope;
+    if (oos && oos.isOutOfScope(t)) return false;
+    try {
+      var guess = window.Generator && window.Generator.analyze(t, null);
+      return !!(guess && INTERVIEW_TYPES[guess.type]);
+    } catch (e) { return false; }
+  }
+
+  function startInterview(original) {
+    addMsg('user', 'Tú', original);
+    var field = function (id, label, ph, max) {
+      return '<label class="iv__l">' + label +
+        '<input class="iv__i" data-iv="' + id + '" maxlength="' + max + '" placeholder="' + ph + '" autocomplete="off"></label>';
+    };
+    var sel = function (id, label, opts) {
+      return '<label class="iv__l">' + label + '<select class="iv__i" data-iv="' + id + '">' +
+        opts.map(function (o) { return '<option value="' + (o[0] ? esc(o[1]) : '') + '">' + esc(o[1]) + '</option>'; }).join('') +
+        '</select></label>';
+    };
+    var html =
+      '<div data-iv-form="1" data-iv-prompt="' + encodeURIComponent(original) + '" class="iv">' +
+      '<b>Antes de crearla, cuéntame de tu negocio 📝</b>' +
+      '<div class="muted" style="margin:4px 0 10px">Así la página sale a tu medida, con tus datos reales (1 minuto). Todo es opcional.</div>' +
+      field('name', 'Nombre del negocio', 'Ej. Pizzería Forno Vivo', 80) +
+      field('city', 'Ciudad o zona', 'Ej. Colonia Roma, CDMX', 80) +
+      field('offer', '¿Qué vendes u ofreces? (lo principal)', 'Ej. pizzas al horno de leña, calzones, bebidas', 220) +
+      field('client', '¿Quiénes son tus clientes?', 'Ej. familias y oficinistas de la zona', 120) +
+      field('diff', '¿Qué te hace diferente?', 'Ej. masa de 48 horas, entrega en 30 min', 160) +
+      field('phone', 'WhatsApp o teléfono', 'Ej. 55 1234 5678', 40) +
+      field('hours', 'Horario', 'Ej. Lun–Dom 12:00–23:00', 80) +
+      sel('style', 'Estilo que te gusta', [['', 'Que la IA elija'], ['x', 'Moderno'], ['x', 'Elegante'], ['x', 'Cálido y acogedor'], ['x', 'Minimalista'], ['x', 'Atrevido y juvenil']]) +
+      field('colors', 'Colores preferidos', 'Ej. rojo y crema (o déjalo vacío)', 60) +
+      sel('goal', '¿Qué quieres que haga tu cliente?', [['', 'Que la IA elija'], ['x', 'Pedir por WhatsApp'], ['x', 'Reservar o agendar cita'], ['x', 'Pedir una cotización'], ['x', 'Ver el menú o catálogo'], ['x', 'Llamarme'], ['x', 'Comprar en línea']]) +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">' +
+      '<button type="button" class="btn btn--primary" data-iv-submit="1">Crear mi página ✨</button>' +
+      '<button type="button" class="btn btn--outline" data-iv-skip="1">Omitir y crear ya</button></div></div>';
+    addMsg('agent', 'DMD', html, true);
+  }
+
+  function finishInterview(btn, useAnswers) {
+    var form = btn.closest('[data-iv-form]');
+    if (!form || form.getAttribute('data-iv-done')) return;
+    form.setAttribute('data-iv-done', '1');
+    var original = decodeURIComponent(form.getAttribute('data-iv-prompt') || '');
+    var labels = { name: 'Nombre', city: 'Ciudad/zona', offer: 'Productos/servicios principales', client: 'Clientes', diff: 'Lo que nos hace diferentes', phone: 'WhatsApp/teléfono', hours: 'Horario', style: 'Estilo deseado', colors: 'Colores preferidos', goal: 'Objetivo de la página' };
+    var lines = [];
+    if (useAnswers) {
+      Object.keys(labels).forEach(function (k) {
+        var el = form.querySelector('[data-iv="' + k + '"]');
+        var v = el ? String(el.value || '').replace(/\s+/g, ' ').trim() : '';
+        if (v) lines.push('- ' + labels[k] + ': ' + v);
+      });
+    }
+    var box = form.parentNode;
+    if (box) box.innerHTML = useAnswers && lines.length
+      ? '✅ Gracias, voy a crear tu página con los datos de tu negocio.'
+      : 'Listo, la creo con lo que me pediste.';
+    state.pendingContact = null;
+    if (useAnswers) {
+      var gv = function (k) { var el = form.querySelector('[data-iv="' + k + '"]'); return el ? String(el.value || '').replace(/\s+/g, ' ').trim() : ''; };
+      state.pendingContact = { phone: gv('phone'), hours: gv('hours'), city: gv('city') };
+    }
+    var enriched = original;
+    if (lines.length) enriched = original.slice(0, 350) + '\n\nDATOS DEL NEGOCIO (dados por el usuario):\n' + lines.join('\n');
+    handlePrompt(enriched.slice(0, 1990), { skipEcho: true });
+  }
+
   function initComposer() {
     var form = $('composer');
     var input = $('prompt');
@@ -1077,7 +1162,14 @@
       e.preventDefault();
       var v = input.value;
       input.value = '';
+      if (shouldInterview(v)) { startInterview(v); return; }
       handlePrompt(v);
+    });
+    var thr = $('thread');
+    if (thr) thr.addEventListener('click', function (e) {
+      var s = e.target && e.target.closest ? e.target.closest('[data-iv-submit],[data-iv-skip]') : null;
+      if (!s) return;
+      finishInterview(s, s.hasAttribute('data-iv-submit'));
     });
     var chips = $('chipsBtn');
     if (chips) chips.addEventListener('click', function () {

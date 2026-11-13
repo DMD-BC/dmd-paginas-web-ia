@@ -185,6 +185,18 @@
     return null;
   };
 
+
+  // true si la consulta NO coincide con ninguna regla específica del
+  // catálogo (solo cae en la foto genérica de relleno). El generador usa
+  // esto para pedir una imagen generada a medida en vez de una genérica.
+  var isGenericQuery = function (query) {
+    if (!query || !String(query).trim()) return false;
+    var q = normQuery(query).replace(/colores?\s+pastel|tonos?\s+pastel|pastel\s+colou?rs?/g, " ");
+    for (var i = 0; i < UNSPLASH_KEYWORDS.length; i++) {
+      if (UNSPLASH_KEYWORDS[i][0].test(q)) return i === UNSPLASH_KEYWORDS.length - 1;
+    }
+    return true;
+  };
   // Español -> inglés para prompts de imagen (solo compatibilidad:
   // Pollinations ya no es la fuente principal de imágenes).
   var IMG_EN = [
@@ -221,6 +233,7 @@
     UNSPLASH: UNSPLASH,
     UNSPLASH_KEYWORDS: UNSPLASH_KEYWORDS,
     unsplashUrl: unsplashUrl,
+    isGenericQuery: isGenericQuery,
     pollinationsUrl: pollinationsUrl,
     toImgEn: toImgEn
   };
