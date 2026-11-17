@@ -50,5 +50,11 @@
         }
       ]
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/mp/:action",
+      "destination": "/api/mp?action=:action"
+    }
   ]
 }
