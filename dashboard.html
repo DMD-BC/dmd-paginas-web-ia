@@ -311,8 +311,8 @@ body.has-pill-nav{padding-top:72px}
       <a href="index.html#product">Producto</a><a href="index.html#templates">Ejemplos</a><a href="editor-ia.html">Editor IA</a><a href="index.html#pricing">Precios</a><a href="index.html#faq">Preguntas</a>
     </nav>
     <div class="acts">
-      <a class="btn btn-ghost" href="https://login.dmdmx.dev">Iniciar sesión</a>
-      <a class="btn btn-dark" href="app.html">Empezar gratis</a>
+      <span id="navAuth" style="display:contents"><a class="btn btn-ghost" href="https://login.dmdmx.dev">Iniciar sesión</a>
+      <a class="btn btn-dark" href="app.html">Empezar gratis</a></span>
       <button class="nav-toggle" id="navToggle" type="button" aria-label="Menú" aria-expanded="false" aria-controls="navDrop">☰</button>
     </div>
     <div class="nav-drop" id="navDrop" hidden>
@@ -321,8 +321,8 @@ body.has-pill-nav{padding-top:72px}
       <a href="editor-ia.html">Editor IA</a>
       <a href="index.html#pricing">Precios</a>
       <a href="index.html#faq">Preguntas</a>
-      <a href="https://login.dmdmx.dev">Iniciar sesión</a>
-      <a class="cta-in-menu" href="app.html">Empezar gratis →</a>
+      <span id="navAuthM" style="display:contents"><a href="https://login.dmdmx.dev">Iniciar sesión</a>
+      <a class="cta-in-menu" href="app.html">Empezar gratis →</a></span>
     </div>
   </div>
 </header>
@@ -604,6 +604,24 @@ GROQ_API_KEY=gsk_tu_clave_aqui   (Vercel > Settings > Environment Variables)
   document.addEventListener('keydown',function(e){
     if(e.key==='Escape'&&!navDrop.hidden){navDrop.hidden=true;navToggle.setAttribute('aria-expanded','false');}
   });
+})();
+</script>
+<script>
+/* Encabezado con sesión: si hay cuenta, muestra el nombre y Cerrar sesión. */
+(function(){
+  var base=(typeof API_BASE!=='undefined')?API_BASE:'';
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function logout(ev){if(ev)ev.preventDefault();fetch(base+'/api/auth/logout',{method:'POST'}).then(function(){location.reload();}).catch(function(){location.reload();});}
+  fetch(base+'/api/auth/me').then(function(r){return r.json();}).then(function(d){
+    if(!d||!d.user||!d.user.name){return;}
+    var name=esc(d.user.name.split(' ')[0]);
+    var desk=document.getElementById('navAuth');
+    if(desk){desk.innerHTML='<a class="btn btn-dark" href="app.html">👤 '+name+'</a> <button class="btn btn-ghost" type="button" id="dashLogout">Cerrar sesión</button>';
+      var b=document.getElementById('dashLogout');if(b)b.addEventListener('click',logout);}
+    var mob=document.getElementById('navAuthM');
+    if(mob){mob.innerHTML='<a href="app.html">👤 '+name+' · Mis proyectos</a><a href="#" id="dashLogoutM">Cerrar sesión</a>';
+      var m=document.getElementById('dashLogoutM');if(m)m.addEventListener('click',logout);}
+  }).catch(function(){});
 })();
 </script>
 <script src="/dmd-tab-titles.js" defer></script>
