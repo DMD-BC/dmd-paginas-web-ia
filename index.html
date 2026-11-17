@@ -225,8 +225,8 @@ footer a{display:block;font-size:14px;color:var(--muted);padding:3px 0}footer a:
       <a href="#product">Producto</a><a href="#templates">Ejemplos</a><a href="editor-ia.html">Editor IA</a><a href="#pricing">Precios</a><a href="#faq">Preguntas</a>
     </nav>
     <div class="acts">
-      <a class="btn btn-ghost" href="app.html">Iniciar sesión</a>
-      <a class="btn btn-dark" href="app.html">Empezar gratis</a>
+      <span id="navAuth" style="display:contents"><a class="btn btn-ghost" href="app.html">Iniciar sesión</a>
+      <a class="btn btn-dark" href="app.html">Empezar gratis</a></span>
       <button class="nav-toggle" id="navToggle" type="button" aria-label="Menú" aria-expanded="false" aria-controls="navDrop">☰</button>
     </div>
     <div class="nav-drop" id="navDrop" hidden>
@@ -235,8 +235,8 @@ footer a{display:block;font-size:14px;color:var(--muted);padding:3px 0}footer a:
       <a href="editor-ia.html">Editor IA</a>
       <a href="#pricing">Precios</a>
       <a href="#faq">Preguntas</a>
-      <a href="app.html">Iniciar sesión</a>
-      <a class="cta-in-menu" href="app.html">Empezar gratis →</a>
+      <span id="navAuthM" style="display:contents"><a href="app.html">Iniciar sesión</a>
+      <a class="cta-in-menu" href="app.html">Empezar gratis →</a></span>
     </div>
   </div>
 </header>
@@ -527,6 +527,23 @@ footer a{display:block;font-size:14px;color:var(--muted);padding:3px 0}footer a:
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModals(); });
   })();
   </script>
+<script>
+/* Encabezado con sesión: si hay cuenta, muestra el nombre y Cerrar sesión. */
+(function(){
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function logout(ev){if(ev)ev.preventDefault();fetch('/api/auth/logout',{method:'POST'}).then(function(){location.reload();}).catch(function(){location.reload();});}
+  fetch('/api/auth/me').then(function(r){return r.json();}).then(function(d){
+    if(!d||!d.user||!d.user.name){return;}
+    var name=esc(d.user.name.split(' ')[0]);
+    var desk=document.getElementById('navAuth');
+    if(desk){desk.innerHTML='<a class="btn btn-dark" href="app.html">👤 '+name+'</a> <button class="btn btn-ghost" type="button" id="idxLogout">Cerrar sesión</button>';
+      var b=document.getElementById('idxLogout');if(b)b.addEventListener('click',logout);}
+    var mob=document.getElementById('navAuthM');
+    if(mob){mob.innerHTML='<a href="app.html">👤 '+name+' · Mis proyectos</a><a href="#" id="idxLogoutM">Cerrar sesión</a>';
+      var m=document.getElementById('idxLogoutM');if(m)m.addEventListener('click',logout);}
+  }).catch(function(){});
+})();
+</script>
 <script src="/dmd-tab-titles.js" defer></script>
 </body>
 </html>
