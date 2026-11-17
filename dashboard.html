@@ -442,43 +442,33 @@ GROQ_API_KEY=gsk_tu_clave_aqui   (Vercel > Settings > Environment Variables)
 
     async function checkStatus() {
       try {
+        const startTime = performance.now();
         // Test server health
         const healthRes = await fetch(`${API_BASE}/api/health`);
         const health = await healthRes.json();
+        const latency = Math.round(performance.now() - startTime);
 
         updateServerStatus(true);
 
-        // Try to generate a simple spec to test Groq
-        testGroqEndpoint();
-      } catch (error) {
-        updateServerStatus(false, error.message);
-      }
-    }
+        const groqConfigured =
+          health.groq !== undefined
+            ? Boolean(health.groq && health.groq !== 'unconfigured' && health.groq !== 'not_configured' && health.groq !== 'missing' && health.groq.configured !== false)
+            : health.groqConfigured !== undefined
+            ? Boolean(health.groqConfigured)
+            : health.hasGroqKey !== undefined
+            ? Boolean(health.hasGroqKey)
+            : health.apiKeyConfigured !== undefined
+            ? Boolean(health.apiKeyConfigured)
+            : Boolean(healthRes.ok && (health.status === 'ok' || health.ok !== false));
 
-    async function testGroqEndpoint() {
-      try {
-        const startTime = performance.now();
-        const res = await fetch(`${API_BASE}/api/generate`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            prompt: 'test',
-            previousSpec: null
-          })
-        });
-        const endTime = performance.now();
-        const latency = Math.round(endTime - startTime);
-
-        if (res.ok) {
-          updateGroqStatus(true, latency);
+        if (groqConfigured) {
+          updateGroqStatus(true, latency, (health.groq && health.groq.model) || health.model);
         } else {
-          const error = await res.json();
-          updateGroqStatus(false, error.error);
+          updateGroqStatus(false, 'API Key no configurada');
         }
       } catch (error) {
-        // Si falla, probablemente sea porque falta API key o Groq está down
-        const isKeyIssue = error.message.includes('API key');
-        updateGroqStatus(false, isKeyIssue ? 'API Key no configurada' : error.message);
+        updateServerStatus(false, error.message);
+        updateGroqStatus(false, error.message);
       }
     }
 
@@ -511,18 +501,23 @@ GROQ_API_KEY=gsk_tu_clave_aqui   (Vercel > Settings > Environment Variables)
       }
     }
 
-    function updateGroqStatus(online, latencyOrError) {
+    function updateGroqStatus(online, latencyOrError, modelName) {
       const indicator = document.getElementById('groqStatus');
       const text = document.getElementById('groqText');
       const model = document.getElementById('groqModel');
       const latencyEl = document.getElementById('latency');
 
-      if (online && typeof latencyOrError === 'number') {
+      if (online) {
         indicator.classList.add('online');
         indicator.classList.remove('loading', 'offline');
         text.textContent = 'Conectado';
-        model.textContent = `Latencia: ${latencyOrError}ms | Modelo: mixtral-8x7b`;
-        latencyEl.textContent = `${latencyOrError}ms`;
+        const resolvedModel = modelName || 'mixtral-8x7b';
+        if (typeof latencyOrError === 'number') {
+          model.textContent = `Latencia: ${latencyOrError}ms | Modelo: ${resolvedModel}`;
+          latencyEl.textContent = `${latencyOrError}ms`;
+        } else {
+          model.textContent = latencyOrError || `Modelo: ${resolvedModel}`;
+        }
       } else {
         indicator.classList.add('offline');
         indicator.classList.remove('loading', 'online');
@@ -582,11 +577,7 @@ GROQ_API_KEY=gsk_tu_clave_aqui   (Vercel > Settings > Environment Variables)
       }
     }
 
-    // Check status on load
-    window.addEventListener('load', checkStatus);
-
-    // Auto-refresh every 30 seconds
-    setInterval(checkStatus, 30000);
+    checkStatus();
   </script>
 
 <script>
