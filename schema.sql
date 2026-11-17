@@ -52,3 +52,16 @@ CREATE TABLE IF NOT EXISTS rate_limits (
   PRIMARY KEY (bucket, key)
 );
 
+CREATE TABLE IF NOT EXISTS subscriptions (
+  id TEXT PRIMARY KEY,                -- preapproval id de Mercado Pago
+  user_id TEXT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  plan TEXT NOT NULL,                 -- pro | pyme | elite
+  status TEXT NOT NULL DEFAULT 'pending', -- pending | authorized | cancelled | paused
+  payer_email TEXT NOT NULL DEFAULT '',
+  init_point TEXT,
+  next_payment_date TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS subscriptions_user_idx ON subscriptions (user_id, created_at DESC);
+

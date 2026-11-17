@@ -555,6 +555,7 @@ button{font:inherit;cursor:pointer;color:inherit}
     <p class="muted modal__lead" id="accUsage">Te quedan 3 cambios gratis.</p>
     <p class="muted modal__note" id="accDbNote">Revisando si las cuentas del servidor están conectadas…</p>
     <p class="muted modal__lead" id="accLogged" hidden></p>
+    <p class="muted modal__lead" id="accPlan" hidden></p>
     <div id="accForm">
       <label class="field" id="accNameField">
         <span>Nombre</span>
@@ -592,6 +593,7 @@ button{font:inherit;cursor:pointer;color:inherit}
     <footer class="modal__foot">
       <span></span>
       <div class="modal__actions">
+        <button class="btn btn--outline" id="accCancel" hidden>Cancelar suscripción</button>
         <button class="btn btn--outline" id="accLogout" hidden>Cerrar sesión</button>
       </div>
     </footer>
@@ -717,5 +719,37 @@ if(document.readyState === 'loading'){
 } else { initFromQuery(); setTimeout(initFromQuery, 400); }
 </script>
 <script src="/dmd-tab-titles.js" defer></script>
+<script>
+// Suscripción de Mercado Pago: muestra el plan actual en "Mi cuenta" y permite cancelarlo.
+(function () {
+  var planEl = document.getElementById('accPlan');
+  var cancelBtn = document.getElementById('accCancel');
+  var btn = document.getElementById('accountBtn');
+  if (!planEl || !btn) return;
+  function statusText(s) {
+    return { pending: 'pendiente de autorización', authorized: 'activa', cancelled: 'cancelada', paused: 'en pausa' }[s] || s;
+  }
+  function refresh() {
+    fetch('/api/mp/subscription')
+      .then(function (r) { return r.json().then(function (d) { return { status: r.status, d: d }; }); })
+      .then(function (x) {
+        if (x.status !== 200 || !x.d.plan) { planEl.hidden = true; if (cancelBtn) cancelBtn.hidden = true; return; }
+        planEl.hidden = false;
+        planEl.textContent = 'Plan actual: ' + x.d.plan_name + ' ($' + x.d.amount + ' MXN/mes), ' + statusText(x.d.status) + '.';
+        if (cancelBtn) cancelBtn.hidden = x.d.status !== 'authorized';
+      })
+      .catch(function () { planEl.hidden = true; });
+  }
+  btn.addEventListener('click', refresh);
+  if (cancelBtn) cancelBtn.addEventListener('click', function () {
+    if (!confirm('¿Cancelar tu suscripción? Ya no se te cobrará el siguiente mes.')) return;
+    fetch('/api/mp/cancel', { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { alert((d && d.message) || (d && d.error) || 'Listo.'); refresh(); })
+      .catch(function () { alert('No se pudo cancelar. Inténtalo de nuevo.'); });
+  });
+  if (new URLSearchParams(window.location.search).get('sub') === 'ok') refresh();
+})();
+</script>
 </body>
 </html>

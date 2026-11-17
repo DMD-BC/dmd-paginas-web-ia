@@ -123,6 +123,7 @@ h2{font-size:clamp(32px,4.4vw,52px);line-height:1.06;letter-spacing:-.04em;max-w
     .plan-check input{margin-top:3px;flex:none;accent-color:#1c1c1c;width:16px;height:16px}
     .plan-check a{color:var(--ink);text-decoration:underline}
     .plan-cta.is-disabled{opacity:.45;pointer-events:none}
+    .plan-msg{font-size:13px;color:var(--muted);margin:8px 0 0;text-align:left;line-height:1.5}
     .dmd-modal{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(28,28,28,.55)}
     .dmd-modal[hidden]{display:none}
     .dmd-modal-card{background:var(--white);border-radius:20px;max-width:640px;width:100%;max-height:85vh;overflow:auto;padding:28px;box-shadow:0 24px 60px rgba(28,28,28,.3);text-align:left}
@@ -320,21 +321,24 @@ footer a{display:block;font-size:14px;color:var(--muted);padding:3px 0}footer a:
           <div class="price">$79<small> MXN /mes</small></div>
           <ul><li>Página web profesional en dmdmx.dev/sitios/tu-marca</li><li>Sitio corporativo básico (One-Page), Mobile-First y código limpio</li><li>Logotipo vectorial (2 propuestas) y tarjeta digital con QR</li><li>SSL forzado y botón directo a WhatsApp</li></ul>
           <label class="plan-check"><input type="checkbox" class="plan-accept"> <span>He leído y acepto los <a href="#" data-open-terms>Términos y Condiciones de Uso</a> y el <a href="#" data-open-privacy>Aviso de Privacidad</a>. Entiendo y acepto que los planes con dominio propio personalizado (Plan PyME y Plan Élite) conllevan un compromiso de permanencia mínima de 12 meses o, en su defecto, una cuota única de liquidación e infraestructura de $350 MXN en caso de cancelación anticipada.</span></label>
-          <a class="btn btn-light btn-lg plan-cta is-disabled" href="https://dmdmx.dev/" aria-disabled="true">Activar Suscripción Mensual ($79 MXN)</a>
+          <a class="btn btn-light btn-lg plan-cta is-disabled" data-plan="pro" href="#" aria-disabled="true">Activar Suscripción Mensual ($79 MXN)</a>
+          <p class="plan-msg" hidden></p>
         </article>
         <article class="plan hot">
           <h3>Plan Crecimiento PyME <span class="badge">Más Elegido</span></h3>
           <div class="price">$189<small> MXN /mes</small></div>
           <ul><li>Dominio propio (.com o .com.mx) incluido sin costo adicional</li><li>Sitio corporativo completo multi-sección (Inicio, Nosotros, Servicios y Contacto)</li><li>Manual de identidad de marca + Estudio Canva DMD Pro</li><li>Servidor premium, SSL oficial, velocidad optimizada y alta en Google Maps</li></ul>
           <label class="plan-check"><input type="checkbox" class="plan-accept"> <span>He leído y acepto los <a href="#" data-open-terms>Términos y Condiciones de Uso</a> y el <a href="#" data-open-privacy>Aviso de Privacidad</a>. Entiendo y acepto que los planes con dominio propio personalizado (Plan PyME y Plan Élite) conllevan un compromiso de permanencia mínima de 12 meses o, en su defecto, una cuota única de liquidación e infraestructura de $350 MXN en caso de cancelación anticipada.</span></label>
-          <a class="btn btn-light btn-lg plan-cta is-disabled" href="https://dmdmx.dev/" aria-disabled="true">Iniciar Plan con Permanencia 12 Meses</a>
+          <a class="btn btn-light btn-lg plan-cta is-disabled" data-plan="pyme" href="#" aria-disabled="true">Iniciar Plan con Permanencia 12 Meses</a>
+          <p class="plan-msg" hidden></p>
         </article>
         <article class="plan">
           <h3>Plan Corporativo Élite</h3>
           <div class="price">$299<small> MXN /mes</small></div>
           <ul><li>Dominio propio + 5 correos corporativos oficiales</li><li>Plataforma avanzada o SaaS completa (catálogos, paneles con roles, reservas/citas)</li><li>Todo lo anterior + plantillas exclusivas en Canva y Figma</li><li>Bases de datos en tiempo real, analítica visual y soporte prioritario con mantenimiento</li></ul>
           <label class="plan-check"><input type="checkbox" class="plan-accept"> <span>He leído y acepto los <a href="#" data-open-terms>Términos y Condiciones de Uso</a> y el <a href="#" data-open-privacy>Aviso de Privacidad</a>. Entiendo y acepto que los planes con dominio propio personalizado (Plan PyME y Plan Élite) conllevan un compromiso de permanencia mínima de 12 meses o, en su defecto, una cuota única de liquidación e infraestructura de $350 MXN en caso de cancelación anticipada.</span></label>
-          <a class="btn btn-light btn-lg plan-cta is-disabled" href="https://dmdmx.dev/" aria-disabled="true">Iniciar Plan con Permanencia 12 Meses</a>
+          <a class="btn btn-light btn-lg plan-cta is-disabled" data-plan="elite" href="#" aria-disabled="true">Iniciar Plan con Permanencia 12 Meses</a>
+          <p class="plan-msg" hidden></p>
         </article>
       </div>
     </div>
@@ -484,7 +488,27 @@ footer a{display:block;font-size:14px;color:var(--muted);padding:3px 0}footer a:
         cta.classList.toggle('is-disabled', !box.checked);
         if (box.checked) cta.removeAttribute('aria-disabled'); else cta.setAttribute('aria-disabled', 'true');
       });
-      cta.addEventListener('click', function (e) { if (!box.checked) e.preventDefault(); });
+      cta.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (!box.checked) return;
+        var msg = card.querySelector('.plan-msg');
+        var plan = cta.getAttribute('data-plan');
+        function showMsg(t) { if (msg) { msg.hidden = false; msg.textContent = t; } }
+        cta.classList.add('is-disabled');
+        showMsg('Conectando con Mercado Pago…');
+        fetch('/api/mp/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ plan: plan }) })
+          .then(function (r) { return r.json().then(function (d) { return { status: r.status, d: d }; }); })
+          .then(function (x) {
+            if (x.status === 401) { window.location.href = '/app.html'; return; }
+            if (x.status === 200 && x.d.init_point) { window.location.href = x.d.init_point; return; }
+            cta.classList.remove('is-disabled');
+            showMsg((x.d && x.d.error) || 'No se pudo iniciar la suscripción. Inténtalo de nuevo.');
+          })
+          .catch(function () {
+            cta.classList.remove('is-disabled');
+            showMsg('No se pudo conectar. Revisa tu conexión e inténtalo de nuevo.');
+          });
+      });
     });
     function openModal(id) { var m = document.getElementById(id); if (m) m.hidden = false; }
     function closeModals() { document.querySelectorAll('.dmd-modal').forEach(function (m) { m.hidden = true; }); }
