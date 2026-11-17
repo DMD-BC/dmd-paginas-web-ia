@@ -43,7 +43,7 @@ module.exports = async function handler(req, res) {
   if (!hasDb()) return noDb(res);
   try {
     const user = await getSessionUser(req);
-    if (!user) return res.status(401).json({ error: 'Inicia sesión para ver tus proyectos.' });
+    if (!user) return res.status(401).json({ error: 'Inicia sesión o regístrate para ver tus proyectos.' });
 
     if (req.method === 'GET') {
       const slug = req.query && req.query.slug ? slugify(req.query.slug) : '';

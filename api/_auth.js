@@ -157,7 +157,7 @@ function readBody(req) {
 function noDb(res) {
   return res.status(503).json({
     db: false,
-    error: 'Base de datos no configurada: falta DATABASE_URL en Vercel (Supabase o Neon gratis). El builder sigue en modo anónimo con límite local de 3.'
+    error: 'No pudimos conectar con el servidor. Inténtalo de nuevo en unos minutos.'
   });
 }
 

@@ -739,7 +739,7 @@
       var hasDb = !!(U.state && U.state.db);
       dbNote.textContent = hasDb
         ? 'Cuentas en el servidor: activas. Tu sesión y tus proyectos se guardan en la base de datos.'
-        : 'Cuentas del servidor aún no conectadas: falta DATABASE_URL en Vercel (base de datos gratis de Supabase o Neon). El registro está desactivado hasta conectarla; mientras tanto usa tus 3 cambios gratis sin registrarte.';
+        : 'Cuentas del servidor no disponibles por ahora. Puedes seguir con tus 3 cambios gratis sin registrarte.';
     }
     var u = U.currentUser();
     var logged = $('accLogged');

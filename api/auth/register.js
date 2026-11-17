@@ -6,7 +6,8 @@
 // Responde 201 + cookie de sesión httpOnly. Sin DATABASE_URL -> 503 db:false.
 const crypto = require('crypto');
 const { hasDb, query } = require('../_db');
-const { scryptHash, createSession, setSessionCookie, readBody, quotaOf, noDb } = require('../_auth');
+const { scryptHash, createSession, setSessionCookie, readBody, quotaOf, noDb, clientIp } = require('../_auth');
+const { rateLimited } = require('../_ratelimit');
 
 module.exports = async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json');
@@ -26,6 +27,10 @@ module.exports = async function handler(req, res) {
   }
   if (password.length < 8) {
     return res.status(400).json({ error: 'La contraseña necesita al menos 8 caracteres.' });
+  }
+  // Límite anti-abuso: 10 registros por hora desde la misma conexión.
+  if (await rateLimited('register', clientIp(req), 10, 60 * 60 * 1000)) {
+    return res.status(429).json({ error: 'Demasiados registros desde esta conexión. Espera una hora e inténtalo de nuevo.' });
   }
   try {
     const existing = await query('SELECT id FROM users WHERE LOWER(email) = $1', [email]);
