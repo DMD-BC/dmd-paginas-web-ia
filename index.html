@@ -34,6 +34,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/consent.css">
 <style>
 :root{
   --cream:#f7f4ed; --cream-2:#f1eee6; --ink:#1c1c1c; --ink-80:rgba(28,28,28,.8);
@@ -181,7 +182,7 @@ details p{margin-top:12px;color:var(--muted);max-width:640px}
 .cta .wrap{position:relative;z-index:1}
 .cta h2{margin:0 auto}.cta .lead{margin:16px auto 32px}
 footer{padding:56px 0 40px;border-top:1px solid var(--line)}
-.fgrid{display:grid;grid-template-columns:1.6fr repeat(3,1fr);gap:32px}
+.fgrid{display:grid;grid-template-columns:1.6fr repeat(4,1fr);gap:32px}
 footer h4{margin:0 0 12px;font-size:13px;font-weight:600}
 footer a{display:block;font-size:14px;color:var(--muted);padding:3px 0}footer a:hover{color:var(--ink)}
 .legal{margin-top:40px;font-size:13px;color:var(--muted)}
@@ -400,6 +401,7 @@ footer a{display:block;font-size:14px;color:var(--muted);padding:3px 0}footer a:
       <div><h4>Producto</h4><a href="#product">Características</a><a href="#templates">Plantillas</a><a href="editor-ia.html">Editor IA</a><a href="#pricing">Precios</a></div>
       <div><h4>Recursos</h4><a href="app.html">Playground</a><a href="index.html#faq">Preguntas frecuentes</a></div>
       <div><h4>Empresa</h4><a href="mailto:contacto@dmd.mx">Contacto</a><a href="https://dmdmx.dev/">DMD</a></div>
+      <div><h4>Legal</h4><a href="/legal.html">Aviso Legal</a><a href="/privacidad.html">Política de Privacidad</a><a href="/cookies.html">Aviso de Cookies</a></div>
     </div>
     <p class="legal">© 2026 DMD | paginas web. Hecho con HTML, CSS y JS puro.</p>
   </div>
@@ -468,12 +470,12 @@ footer a{display:block;font-size:14px;color:var(--muted);padding:3px 0}footer a:
   </div>
   <div class="dmd-modal" id="privacyModal" hidden>
     <div class="dmd-modal-card" role="dialog" aria-modal="true" aria-labelledby="privacyTitle">
-      <h3 id="privacyTitle">Aviso de Privacidad — DMD (Digital MAJFA Dreams)</h3>
+      <h3 id="privacyTitle">Aviso de Privacidad: DMD (Digital MAJFA Dreams)</h3>
       <p><strong>Datos que recopilamos:</strong> nombre y correo electrónico que nos compartes al registrarte o contratar, así como la información necesaria para prestarte el servicio. Los datos de pago (tarjeta, etc.) los procesa directamente la pasarela de pago; DMD no almacena los datos de tu tarjeta.</p>
       <p><strong>Finalidad:</strong> prestarte el servicio contratado (crear y publicar tu página web, gestionar tu suscripción y atenderte).</p>
       <p><strong>Uso de tus datos:</strong> no vendemos ni compartimos tus datos con terceros con fines publicitarios.</p>
       <p><strong>Tus derechos:</strong> puedes pedir acceso, corrección o eliminación de tus datos escribiendo a <a href="mailto:contacto@dmd.mx">contacto@dmd.mx</a>.</p>
-      <p><strong>Responsable:</strong> DMD | Digital MAJFA Dreams — <a href="mailto:contacto@dmd.mx">contacto@dmd.mx</a>.</p>
+      <p><strong>Responsable:</strong> DMD | Digital MAJFA Dreams: <a href="mailto:contacto@dmd.mx">contacto@dmd.mx</a>.</p>
       <button class="btn btn-dark dmd-modal-close" type="button" data-close-modal>Entendido</button>
     </div>
   </div>
@@ -544,6 +546,19 @@ footer a{display:block;font-size:14px;color:var(--muted);padding:3px 0}footer a:
   }).catch(function(){});
 })();
 </script>
+<!-- Banner de cookies -->
+<div class="dmd-cookie" id="dmdCookieBanner" hidden role="dialog" aria-label="Aviso de cookies">
+  <p>Usamos cookies para que el sitio funcione y, solo si aceptas, para medir las visitas con Google Analytics. Puedes rechazarlas y el sitio sigue funcionando igual. Más información en nuestro <a href="/cookies.html">Aviso de Cookies</a>.</p>
+  <div class="row">
+    <button class="dmd-btn dmd-btn-dark" id="dmdCookieAccept" type="button">Aceptar</button>
+    <button class="dmd-btn dmd-btn-light" id="dmdCookieReject" type="button">Rechazar</button>
+  </div>
+</div>
+<!-- Botón flotante de WhatsApp -->
+<a class="wa-float" href="https://wa.me/527621068212" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp" title="Escríbenos por WhatsApp">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+</a>
+<script src="/assets/js/consent.js"></script>
 <script src="/dmd-tab-titles.js" defer></script>
 </body>
 </html>
