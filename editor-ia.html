@@ -112,7 +112,7 @@
       </a>
 
       <div class="flex items-center space-x-2 border-l border-[#e7e4dc] pl-3">
-        <img src="/favicon.svg" alt="DMD" class="w-7 h-7 rounded-full">
+        <img src="/favicon.svg" alt="DMD" class="w-7 h-7 rounded-full" width="28" height="28">
         <div>
           <div class="flex items-center space-x-2">
             <h1 class="text-xs sm:text-sm font-black text-[#1c1c1c] tracking-wide truncate max-w-[180px] sm:max-w-xs" id="template-title">
@@ -173,7 +173,7 @@
 
   <!-- BANNER DE PLANTILLA PREMIUM: ya no bloquea con un pago simulado;
        los cambios con IA usan la misma cuota que el builder. -->
-  <div id="premium-lock-banner" class="hidden bg-gradient-to-r from-amber-100 via-[#fcfbf8] to-amber-100 border-b border-amber-500/40 px-4 py-2 text-xs flex items-center justify-between text-amber-800">
+  <div id="premium-lock-banner" role="region" aria-label="Aviso de plan" class="hidden bg-gradient-to-r from-amber-100 via-[#fcfbf8] to-amber-100 border-b border-amber-500/40 px-4 py-2 text-xs flex items-center justify-between text-amber-800">
     <div class="flex items-center space-x-2">
       <span class="text-base">🔒</span>
       <span class="font-bold">Plantilla Premium:</span>
@@ -836,16 +836,19 @@
   </script>
 <!-- Banner de cookies -->
 <div class="dmd-cookie" id="dmdCookieBanner" hidden role="dialog" aria-label="Aviso de cookies">
-  <p>Usamos cookies para que el sitio funcione y, solo si aceptas, para medir las visitas con Google Analytics. Puedes rechazarlas y el sitio sigue funcionando igual. Más información en nuestro <a href="/cookies.html">Aviso de Cookies</a>.</p>
+  <p>Usamos cookies para que el sitio funcione y, solo si aceptas, para medir las visitas y mejorar el sitio (Google Analytics, Google Tag Manager, Meta Pixel, Microsoft Clarity y Sentry). Puedes rechazarlas y el sitio sigue funcionando igual. Más información en nuestro <a href="/cookies.html">Aviso de Cookies</a>.</p>
   <div class="row">
     <button class="dmd-btn dmd-btn-dark" id="dmdCookieAccept" type="button">Aceptar</button>
     <button class="dmd-btn dmd-btn-light" id="dmdCookieReject" type="button">Rechazar</button>
   </div>
 </div>
+
+<footer>
 <!-- Botón flotante de WhatsApp -->
 <a class="wa-float" href="https://wa.me/527621068212" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp" title="Escríbenos por WhatsApp">
   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
 </a>
+</footer>
 <script src="/assets/js/consent.js"></script>
 <script src="/dmd-tab-titles.js" defer></script>
 </body>
