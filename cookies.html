@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Aviso de Cookies | DMD | Digital MAJFA Dreams</title>
+<meta name="description" content="Aviso de cookies de DMD (Digital MAJFA Dreams): qué cookies usamos, para qué sirven y cómo cambiar tu elección." />
+<link rel="canonical" href="https://crear.dmdmx.dev/cookies.html" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="shortcut icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/css/consent.css">
+<style>
+:root{--cream:#f7f4ed;--ink:#1c1c1c;--muted:#5f5f5d;--line:#eceae4;--white:#fcfbf8;--font:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--font);color:var(--ink);background:var(--cream);line-height:1.65;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+.wrap{max-width:760px;margin:0 auto;padding:0 24px}
+.top{padding:22px 0;border-bottom:1px solid var(--line)}
+.top a{display:inline-flex;align-items:center;gap:9px;font-weight:700;font-size:17px;text-decoration:none;letter-spacing:-.04em}
+.top img{width:26px;height:26px;border-radius:7px}
+main{padding:56px 0 80px}
+h1{font-size:clamp(30px,5vw,44px);line-height:1.1;letter-spacing:-.04em;margin:0 0 8px}
+.updated{color:var(--muted);font-size:14px;margin:0 0 32px}
+h2{font-size:21px;letter-spacing:-.02em;margin:36px 0 10px}
+p,li{font-size:16px;color:#33302c}
+p{margin:0 0 14px}
+ul{margin:0 0 14px;padding-left:20px}
+li{margin-bottom:6px}
+footer{padding:40px 0;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}
+footer a{color:var(--muted);text-decoration:none;margin-right:18px}
+footer a:hover{color:var(--ink)}
+footer p{margin:8px 0 0;font-size:13px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap"><a href="/"><img src="/favicon.svg" alt="DMD" /><span>DMD | paginas web</span></a></div>
+</header>
+<main>
+  <div class="wrap">
+    <h1>Aviso de Cookies</h1>
+    <p class="updated">Última actualización: 18 de noviembre de 2026</p>
+
+    <h2>Qué son las cookies</h2>
+    <p>Las cookies son archivos pequeños que un sitio guarda en tu navegador para recordar cosas, por ejemplo que ya iniciaste sesión o qué idioma prefieres. También existe el almacenamiento local del navegador, que este sitio usa para recordar tu elección sobre las cookies.</p>
+
+    <h2>Qué cookies usa este sitio</h2>
+    <ul>
+      <li><strong>Cookies necesarias:</strong> son las que hacen que el sitio funcione, como mantener tu sesión iniciada. Sin ellas no podrías usar tu cuenta. Estas cookies no se pueden desactivar desde el sitio.</li>
+      <li><strong>Preferencia de cookies:</strong> guardamos tu elección (aceptar o rechazar) en el almacenamiento local de tu navegador, para no volver a preguntarte en cada visita.</li>
+      <li><strong>Analítica (Google Analytics):</strong> solo se activa si aceptas las cookies en el aviso. Nos ayuda a saber cuántas personas visitan el sitio y qué páginas usan, sin identificarte personalmente. Si la rechazas, no se carga nada de Google Analytics.</li>
+    </ul>
+
+    <h2>Cómo cambiar tu elección</h2>
+    <p>Puedes cambiar tu decisión cuando quieras. Pulsa el botón de abajo y el aviso de cookies volverá a aparecer para que elijas de nuevo:</p>
+    <p><button class="dmd-btn dmd-btn-dark" type="button" onclick="window.DMDResetCookieConsent()">Cambiar mi elección de cookies</button></p>
+    <p>También puedes borrar o bloquear las cookies desde la configuración de tu navegador. Ten en cuenta que si bloqueas las cookies necesarias, algunas funciones del sitio, como mantener tu sesión, dejarán de funcionar.</p>
+
+    <h2>Más información</h2>
+    <p>Para saber cómo tratamos tus datos personales, consulta nuestro <a href="/privacidad.html">Aviso de Privacidad</a>. Si tienes dudas, escríbenos a <a href="mailto:contacto@dmd.mx">contacto@dmd.mx</a>.</p>
+  </div>
+</main>
+<footer>
+  <div class="wrap">
+    <a href="/legal.html">Aviso Legal</a><a href="/privacidad.html">Política de Privacidad</a><a href="/cookies.html">Aviso de Cookies</a><a href="/">Inicio</a>
+    <p>© 2026 DMD | Digital MAJFA Dreams</p>
+  </div>
+</footer>
+
+<!-- Banner de cookies -->
+<div class="dmd-cookie" id="dmdCookieBanner" hidden role="dialog" aria-label="Aviso de cookies">
+  <p>Usamos cookies para que el sitio funcione y, solo si aceptas, para medir las visitas con Google Analytics. Puedes rechazarlas y el sitio sigue funcionando igual. Más información en nuestro <a href="/cookies.html">Aviso de Cookies</a>.</p>
+  <div class="row">
+    <button class="dmd-btn dmd-btn-dark" id="dmdCookieAccept" type="button">Aceptar</button>
+    <button class="dmd-btn dmd-btn-light" id="dmdCookieReject" type="button">Rechazar</button>
+  </div>
+</div>
+<!-- Botón flotante de WhatsApp -->
+<a class="wa-float" href="https://wa.me/527621068212" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp" title="Escríbenos por WhatsApp">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+</a>
+<script src="/assets/js/consent.js"></script>
+<script src="/dmd-tab-titles.js" defer></script>
+</body>
+</html>

@@ -70,7 +70,7 @@
     if (host.indexOf('contenido') !== -1) return TITULOS.contenido;
 
     // --- Rutas del sitio oficial y del constructor ---
-    if (/(^|\/)(privacidad|terminos|términos|aviso|legal)([\/\.\-]|$)/.test(ruta)) return TITULOS.legal;
+    if (/(^|\/)(privacidad|terminos|términos|aviso|legal|cookies)([\/\.\-]|$)/.test(ruta)) return TITULOS.legal;
     if (/(^|\/)dominio/.test(ruta)) return TITULOS.dominios;
     if (/(^|\/)(checkout|pago|pagar|suscripcion|suscripción|suscribirse)([\/\.\-]|$)/.test(ruta)) return TITULOS.checkout;
     if (/(^|\/)(precio|precios|planes|plan)([\/\.\-]|$)/.test(ruta)) return TITULOS.planes;
