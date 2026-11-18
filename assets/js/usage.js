@@ -177,6 +177,30 @@ window.DMDUsage = (function () {
     await sync();
   }
 
+  // Borra la cuenta y todos sus datos en el servidor. Pide la
+  // contraseña actual como confirmación; sin ella no se borra nada.
+  async function deleteAccount(password) {
+    if (!state.user) {
+      return { ok: false, error: 'Primero inicia sesión para eliminar tu cuenta.' };
+    }
+    if (!password) {
+      return { ok: false, error: 'Escribe tu contraseña para confirmar.' };
+    }
+    try {
+      var r = await api('/api/auth/delete-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: password })
+      });
+      if (!r.data || !r.data.ok) return { ok: false, error: dbError(r.data) };
+      state.user = null;
+      await sync();
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: 'No hay conexión con el servidor.' };
+    }
+  }
+
   async function applyPromo(code) {
     if (!state.user) {
       return { ok: false, error: 'Primero regístrate o inicia sesión para usar el código.' };
@@ -223,6 +247,7 @@ window.DMDUsage = (function () {
     register: register,
     login: login,
     logout: logout,
+    deleteAccount: deleteAccount,
     applyPromo: applyPromo,
     normalizePromo: normalizePromo,
     statusText: statusText

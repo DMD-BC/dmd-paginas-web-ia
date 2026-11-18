@@ -21,12 +21,12 @@ module.exports = async function handler(req, res) {
   const name = String(body.name || '').trim();
   const email = String(body.email || '').trim().toLowerCase();
   const password = String(body.password || '');
-  if (name.length < 2) return res.status(400).json({ error: 'Escribe tu nombre.' });
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (name.length < 2 || name.length > 100) return res.status(400).json({ error: 'Escribe tu nombre.' });
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
     return res.status(400).json({ error: 'Ese correo no se ve válido.' });
   }
-  if (password.length < 8) {
-    return res.status(400).json({ error: 'La contraseña necesita al menos 8 caracteres.' });
+  if (password.length < 8 || password.length > 128) {
+    return res.status(400).json({ error: 'La contraseña necesita entre 8 y 128 caracteres.' });
   }
   // Límite anti-abuso: 10 registros por hora desde la misma conexión.
   if (await rateLimited('register', clientIp(req), 10, 60 * 60 * 1000)) {

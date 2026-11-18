@@ -28,7 +28,11 @@ function getPool() {
     const { Pool } = require('pg');
     pool = new Pool({
       connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: process.env.DB_SSL_STRICT === '1' }, // pon DB_SSL_STRICT=1 en Vercel para validar el certificado
+      // Seguro por defecto: se valida el certificado de la DB salvo que
+      // se ponga DB_SSL_STRICT=0 en Vercel. Antes era al revés (solo se
+      // validaba con DB_SSL_STRICT=1) y quedaba sin validar si nadie
+      // activaba esa variable.
+      ssl: { rejectUnauthorized: process.env.DB_SSL_STRICT !== '0' },
       max: 2,
       idleTimeoutMillis: 10000,
       connectionTimeoutMillis: 5000

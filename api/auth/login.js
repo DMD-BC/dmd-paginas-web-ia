@@ -26,6 +26,11 @@ module.exports = async function handler(req, res) {
   if (await rateLimited('login', ip, 20, 15 * 60 * 1000)) {
     return res.status(429).json({ error: 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.' });
   }
+  // Contraseña larguísima: no se pasa a scrypt, se rechaza como
+  // incorrecta sin decir por qué (igual que un correo inexistente).
+  if (!password || password.length > 128) {
+    return res.status(401).json({ error: 'Correo o contraseña incorrectos.' });
+  }
   try {
     const found = await query(
       'SELECT id, name, email, pass_hash, promo, used_count FROM users WHERE LOWER(email) = $1',

@@ -751,6 +751,8 @@
     if (form) form.style.display = u ? 'none' : '';
     var lo = $('accLogout');
     if (lo) lo.hidden = !u;
+    var del = $('accDelete');
+    if (del) del.hidden = !u;
     var promoBox = $('accPromoBox');
     if (promoBox) promoBox.style.display = '';
     if (!u) {
@@ -824,6 +826,24 @@
       refreshAccountModal();
       var st = $('accStatus');
       if (st) st.textContent = 'Sesión cerrada. Vuelves al modo anónimo.';
+    });
+    var del = $('accDelete');
+    if (del) del.addEventListener('click', async function () {
+      var U = window.DMDUsage;
+      if (!U) return;
+      var st = $('accStatus');
+      if (!window.confirm('¿Seguro que quieres eliminar tu cuenta? Se borran tus proyectos guardados y no se pueden recuperar.')) return;
+      var pw = window.prompt('Escribe tu contraseña para confirmar que eres tú:');
+      if (!pw) return;
+      if (st) st.textContent = 'Eliminando tu cuenta…';
+      var r = await U.deleteAccount(pw);
+      if (st) st.textContent = r.ok ? 'Cuenta eliminada.' : ('⚠️ ' + (r.error || 'Error'));
+      if (r.ok) {
+        restoreAnonProjects();
+        updateUsageUI();
+        refreshAccountModal();
+        setTimeout(close, 900);
+      }
     });
   }
 
