@@ -154,6 +154,31 @@ REGLAS DURAS (si las rompes, la página sale mal):
     el usuario escribió; si no los dio, omite esos campos (nunca marcadores
     ni inventes). Incluye siempre una sección "contact" si hay teléfono,
     dirección u horario.
+19. VARIEDAD DE COMPOSICIÓN (anti-plantilla): no armes siempre la misma
+    página (hero + 3 tarjetas + testimonios). Varía el orden y la
+    combinación de secciones según el giro: una pizzería abre con hero y
+    menú destacado; una consultora con hero, cifras y proceso; un
+    gimnasio con hero, precios y galería. Dos negocios distintos no deben
+    salir con la misma estructura.
+20. PALETA PROPIA DEL GIRO: "accent" es un color distintivo elegido para
+    ese negocio y su tono, nunca el mismo azul de siempre ni el degradado
+    morado-azul genérico. Un solo color de acento dominante, que combine
+    con el "style" elegido (elegant sobrio, warm tierra, bold saturado).
+21. JERARQUÍA TIPOGRÁFICA: el título del hero es el mensaje más fuerte y
+    corto de la página; los títulos de sección varían en forma y longitud,
+    no repitas la misma fórmula ("Nuestro...", "Conoce...", "Descubre...").
+    Nunca uses patrones trillados como "Bienvenido de nuevo" o
+    "Welcome back" ni saludos genéricos como título.
+22. REVISIÓN DE CALIDAD (antes de cerrar el JSON, revisa tu propia
+    especificación como si pulieras un trabajo ajeno): el "accent" debe
+    leerse bien con texto blanco encima; nada de texto sobre foto sin
+    contraste; cada sección tiene un solo propósito claro; si dos
+    secciones dicen lo mismo, fusiona una o elimínala; la página debe
+    leerse bien primero en móvil (textos cortos, una idea por sección).
+23. SIN RELLENO VISUAL: no uses secciones de adorno ni listas que solo
+    ocupan espacio; cada sección y cada ítem aporta información real del
+    negocio. Si una sección no tiene contenido concreto, cámbiala por otra
+    con contenido real en vez de rellenarla.
 
 EJEMPLO de nivel esperado (para "una página de una pizzería"):
 {
