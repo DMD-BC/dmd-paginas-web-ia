@@ -20,6 +20,23 @@ function json(res, status, body) {
   return res.status(status).json(body);
 }
 
+// CORS: www.dmdmx.dev llama a /api/mp/subscribe cross-origin con la cookie
+// de sesión (Domain=.dmdmx.dev). Sin estos headers el navegador bloquea la
+// respuesta y el checkout no arranca. Mismo patrón que api/auth/otp.js
+// (login) y api/projects.js (crear): se refleja el origen solo si es
+// dmdmx.dev y se permiten credenciales. Los headers van en TODAS las
+// respuestas (también 401/409/429) para que el cliente pueda leerlas.
+function cors(req, res) {
+  const origin = (req.headers && req.headers.origin) || '';
+  if (/^https:\/\/([a-z0-9-]+\.)*dmdmx\.dev$/.test(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Vary', 'Origin');
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+
 // POST /api/mp/subscribe — Crea la suscripción mensual en Mercado Pago.
 // Requiere sesión. Body: { plan: "pro" | "pyme" | "elite" }.
 // Devuelve { init_point, preapproval_id }.
@@ -194,6 +211,8 @@ async function cancel(req, res) {
 }
 
 module.exports = async function handler(req, res) {
+  cors(req, res);
+  if (req.method === 'OPTIONS') return res.status(200).end();
   const action = (req.query && req.query.action) || '';
   if (req.method === 'POST' && action === 'subscribe') return subscribe(req, res);
   if (action === 'webhook' && (req.method === 'POST' || req.method === 'GET')) return webhook(req, res);
