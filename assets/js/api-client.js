@@ -46,6 +46,17 @@ window.ApiClient = (function () {
     }
   }
 
+  // La cuota se cobra en el servidor dentro de /api/generate y la
+  // respuesta trae la cuota nueva: se refleja en el espejo local para
+  // que el contador de la interfaz no quede desactualizado.
+  function applyQuotaFrom(data) {
+    try {
+      if (data && data.quota && window.DMDUsage && window.DMDUsage.applyQuota) {
+        window.DMDUsage.applyQuota(data.quota);
+      }
+    } catch (e) { /* el espejo es solo interfaz, nunca rompe la generación */ }
+  }
+
   /**
    * Generar spec con Groq a través del backend.
    * @returns {Promise<{spec, model, plan}>}
@@ -53,6 +64,7 @@ window.ApiClient = (function () {
   async function generatePage(prompt, previousSpec) {
     var data = await postJson('/api/generate', { prompt: prompt, previousSpec: previousSpec || null }, GENERATE_TIMEOUT_MS);
     if (!data || !data.spec) throw new Error('Respuesta inválida del servidor: falta spec');
+    applyQuotaFrom(data);
     return { spec: data.spec, model: data.model || 'groq', plan: data.plan || '' };
   }
 
@@ -69,6 +81,7 @@ window.ApiClient = (function () {
       style: style || 'claro'
     }, GENERATE_TIMEOUT_MS);
     if (!data || !data.html || data.html.indexOf('<body') === -1) throw new Error('Respuesta inválida del servidor: falta html');
+    applyQuotaFrom(data);
     return { html: data.html, model: data.model || 'groq' };
   }
 

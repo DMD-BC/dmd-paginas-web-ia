@@ -5,12 +5,96 @@
 //     incluya "Modifica el código HTML" + "Código actual:" -> { success, html, model }
 // La llave de Groq vive solo en process.env.GROQ_API_KEY (variable de
 // entorno de Vercel). Jamás se devuelve ni se registra.
+//
+// CUOTA EN EL SERVIDOR: los modos spec y edición cobran 1 cambio aquí
+// mismo, antes de llamar a Groq (25 por cuenta, 50 con código promocional,
+// 3 anónimos por IP). Antes la cobraba el cliente con POST /api/usage
+// { action:'consume' } y quien llamaba directo a /api/generate se saltaba
+// el contador. El modo texto (Contenido IA, Canva IA, POS) no se cobra,
+// igual que antes. Si Groq falla después de cobrar, el cambio se devuelve
+// para que el reintento manual no cueste otro.
 
 const { generateSpec, editHtml, generateText } = require('./_groq');
-const { clientIp, readBody } = require('./_auth');
+const { getSessionUser, quotaOf, ipHash, clientIp, readBody } = require('./_auth');
+const { hasDb, query } = require('./_db');
 const { rateLimited } = require('./_ratelimit');
 const { searchWeb, webContextBlock } = require('./_websearch');
 const { ensureWatermark } = require('./_watermark');
+
+const ANON_LIMIT = 3;
+
+function quotaPayload(used, limit, promo) {
+  return { used, limit, promo: !!promo, remaining: Math.max(0, limit - used) };
+}
+
+// Cobra 1 cambio, atómico: solo si queda cupo. Devuelve
+// { ok:true, kind:'user'|'anon', userId?, ipHash?, quota } o
+// { ok:false, quota, error }. Sin DB no hay dónde cobrar: se permite
+// (igual que hoy, que sin DB la cuota es solo un espejo local en el cliente).
+async function chargeQuota(req) {
+  if (!hasDb()) return { ok: true, db: false, quota: null };
+  const user = await getSessionUser(req);
+  if (user) {
+    const q = quotaOf(user);
+    const r = await query(
+      'UPDATE users SET used_count = used_count + 1 ' +
+      'WHERE id = $1 AND used_count < (CASE WHEN promo THEN 50 ELSE 25 END) ' +
+      'RETURNING used_count, promo',
+      [user.id]
+    );
+    if (!r.rows[0]) {
+      return {
+        ok: false,
+        quota: quotaPayload(q.used, q.limit, q.promo),
+        error: 'Ya usaste tus ' + q.limit + ' cambios.' +
+          (q.promo ? '' : ' Con un código promocional llegas a 50 cambios.')
+      };
+    }
+    const u = r.rows[0];
+    const limit = u.promo ? 50 : 25;
+    return { ok: true, kind: 'user', userId: user.id, quota: quotaPayload(u.used_count, limit, u.promo) };
+  }
+  const hash = ipHash(req);
+  const anon = await query('SELECT count FROM anon_usage WHERE ip_hash = $1', [hash]);
+  const used = (anon.rows[0] && anon.rows[0].count) || 0;
+  if (used >= ANON_LIMIT) {
+    return {
+      ok: false,
+      quota: quotaPayload(used, ANON_LIMIT, false),
+      error: 'Ya usaste tus 3 cambios gratis. Regístrate para tener 25.'
+    };
+  }
+  const up = await query(
+    'INSERT INTO anon_usage (ip_hash, count) VALUES ($1, 1) ' +
+    'ON CONFLICT (ip_hash) DO UPDATE SET count = anon_usage.count + 1, updated_at = NOW() ' +
+    'WHERE anon_usage.count < $2 RETURNING count',
+    [hash, ANON_LIMIT]
+  );
+  if (!up.rows[0]) {
+    return {
+      ok: false,
+      quota: quotaPayload(ANON_LIMIT, ANON_LIMIT, false),
+      error: 'Ya usaste tus 3 cambios gratis. Regístrate para tener 25.'
+    };
+  }
+  const n = up.rows[0].count;
+  return { ok: true, kind: 'anon', ipHash: hash, quota: quotaPayload(n, ANON_LIMIT, false) };
+}
+
+// Devuelve 1 cambio cuando la IA falló después de cobrar: el intento
+// fallido no se cuenta y el reintento manual no cobra otro.
+async function refundQuota(charged) {
+  if (!charged || !charged.ok || charged.db === false) return;
+  try {
+    if (charged.kind === 'user' && charged.userId) {
+      await query('UPDATE users SET used_count = used_count - 1 WHERE id = $1 AND used_count > 0', [charged.userId]);
+    } else if (charged.kind === 'anon' && charged.ipHash) {
+      await query('UPDATE anon_usage SET count = count - 1 WHERE ip_hash = $1 AND count > 0', [charged.ipHash]);
+    }
+  } catch (e) {
+    console.error('generate refund error:', e.message);
+  }
+}
 
 const MAX_PROMPT_CHARS = 2000;
 const MAX_HTML_CHARS = 12000;
@@ -84,6 +168,7 @@ module.exports = async function handler(req, res) {
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), GROQ_TIMEOUT_MS);
+  let charged = null;
 
   try {
     // ---- Modo edición HTML (Copilot del Editor IA) ----
@@ -104,9 +189,14 @@ module.exports = async function handler(req, res) {
       if (html.length > MAX_HTML_CHARS) {
         return res.status(400).json({ error: 'HTML demasiado largo' });
       }
+      charged = await chargeQuota(req);
+      if (!charged.ok) {
+        clearTimeout(timer);
+        return res.status(429).json({ error: charged.error, quotaExceeded: true, quota: charged.quota });
+      }
       const out = await editHtml(instruction, html, controller.signal);
       clearTimeout(timer);
-      return res.status(200).json({ success: true, html: ensureWatermark(out.html), model: out.model });
+      return res.status(200).json({ success: true, html: ensureWatermark(out.html), model: out.model, quota: charged.quota });
     }
 
     // ---- Modo texto (Contenido IA, Canva IA, POS) ----
@@ -155,6 +245,11 @@ module.exports = async function handler(req, res) {
       ]);
       if (web) webCtx = webContextBlock(web);
     } catch (e) { web = null; webCtx = ''; }
+    charged = await chargeQuota(req);
+    if (!charged.ok) {
+      clearTimeout(timer);
+      return res.status(429).json({ error: charged.error, quotaExceeded: true, quota: charged.quota });
+    }
     const result = await generateSpec(prompt, previousSpec, controller.signal, webCtx || undefined);
     clearTimeout(timer);
     return res.status(200).json({
@@ -162,10 +257,12 @@ module.exports = async function handler(req, res) {
       spec: result.spec,
       model: result.model,
       plan: result.plan,
-      web: web ? { query: web.query, facts: web.facts, images: web.images, sites: web.sites || [] } : null
+      web: web ? { query: web.query, facts: web.facts, images: web.images, sites: web.sites || [] } : null,
+      quota: charged.quota
     });
   } catch (error) {
     clearTimeout(timer);
+    if (charged) await refundQuota(charged);
     const status = error.status || 500;
     if (error.name === 'AbortError') {
       return res.status(504).json({

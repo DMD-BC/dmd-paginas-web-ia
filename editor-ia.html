@@ -598,8 +598,9 @@
         return;
       }
 
-      // Cuota (igual que el builder): se cobra 1 cambio cuando el cambio
-      // arranca; el reintento manual tras un fallo de IA no cobra otro.
+      // Cuota (igual que el builder): la cobra el servidor dentro de
+      // /api/generate, antes de llamar a Groq; si la IA falla, el servidor
+      // devuelve el cambio y el reintento manual no cobra otro.
       var U = window.DMDUsage;
       if (U && !isRetry) {
         try { await U.sync(); } catch (e) { /* sigue con el espejo local */ }
@@ -608,13 +609,6 @@
           updateEditorUsageUI();
           return;
         }
-        var consumed = await U.consume();
-        if (!consumed) {
-          addChatMessage("bot", '⛔ Se acabaron tus cambios (límite ' + U.limit() + '). ' + (U.currentUser() ? 'Con un código promocional llegas a 50 cambios.' : 'Regístrate para tener ' + U.FREE_LIMIT + ' cambios por cuenta (50 con un código promocional).') + '<br><button onclick="openAccountModal()" style="margin-top:6px;padding:6px 12px;border-radius:999px;background:#1c1c1c;color:#fff;font-weight:700;cursor:pointer">👤 Mi cuenta</button>');
-          updateEditorUsageUI();
-          return;
-        }
-        updateEditorUsageUI();
       }
 
       let aiFailed = true;
