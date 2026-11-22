@@ -8,7 +8,9 @@
  *     puede leer) con el token hasheado en la DB.
  *   - Cuota en servidor: anónimo 3 cambios en total (por IP),
  *     registrado 25, con código promocional 50. Cada generación cobra 1
- *     cambio con POST /api/usage { action:'consume' }.
+ *     cambio EN EL SERVIDOR, dentro de /api/generate, antes de llamar a
+ *     Groq; si la IA falla, el cambio se devuelve. POST /api/usage
+ *     { action:'consume' } queda solo por compatibilidad.
  *   - Proyectos: GET/POST /api/projects (por usuario, en la DB).
  *     Cuenta nueva -> lista VACÍA. Al iniciar sesión aparecen SUS
  *     proyectos, cargados desde la DB (app.js: syncServerProjects).
@@ -101,7 +103,9 @@ window.DMDUsage = (function () {
   function canUse() { return remaining() > 0; }
 
   // Cobra 1 cambio. Con DB: POST /api/usage (el servidor decide).
-  // Sin DB: contador local anónimo. Devuelve Promise<boolean>.
+  // LEGADO: desde el cobro en /api/generate el cliente ya no llama a
+  // consume(); queda solo por compatibilidad con clientes viejos.
+  // Devuelve Promise<boolean>.
   async function consume() {
     if (!canUse()) return false;
     if (!state.db) {
@@ -244,6 +248,7 @@ window.DMDUsage = (function () {
     remaining: remaining,
     canUse: canUse,
     consume: consume,
+    applyQuota: applyQuota,
     register: register,
     login: login,
     logout: logout,

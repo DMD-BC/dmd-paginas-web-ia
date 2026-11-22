@@ -874,10 +874,11 @@
       return;
     }
 
-    // Límites de uso (local, por navegador): anónimo 3, registrado 25,
-    // con código promocional 50. Se cobra 1 cambio cuando la generación
-    // arranca; el reintento manual tras un fallo de IA no cobra otro
-    // (ese intento ya se cobró).
+    // Límites de uso: anónimo 3, registrado 25, con código promocional 50.
+    // La cuota se cobra en el servidor, dentro de /api/generate, antes de
+    // llamar a Groq; si la IA falla, el servidor devuelve el cambio y el
+    // reintento manual no cobra otro. Aquí solo queda la guarda rápida con
+    // el espejo local; el servidor es quien decide y devuelve la cuota nueva.
     var U = window.DMDUsage;
     if (U && !isRetry) {
       if (!U.canUse()) {
@@ -890,17 +891,6 @@
         state.busy = false;
         return;
       }
-      var consumed = await U.consume();
-      if (!consumed) {
-        addMsg('agent', 'DMD',
-          '⛔ Se acabaron tus cambios (límite ' + U.limit() + '). ' +
-          (U.currentUser() ? 'Con un código promocional llegas a 50 cambios.' : 'Regístrate para tener ' + U.FREE_LIMIT + ' cambios por cuenta (50 con un código promocional).') +
-          '<br><button type="button" class="btn btn--primary" data-open-account="1" style="margin-top:8px">Mi cuenta</button>',
-          true);
-        state.busy = false;
-        return;
-      }
-      updateUsageUI();
     }
 
     var agentEl = addMsg('agent', 'DMD', 'Estoy generando tu página…');
@@ -926,6 +916,7 @@
         var res = await window.LLM.planSpec(prompt, state.spec, function () {});
         spec = res.spec;
         usedAI = true;
+        if (U) updateUsageUI();
       } catch (e) {
         errMsg = e && e.message ? e.message : String(e);
         console.warn('IA DMD no disponible, fallback local:', errMsg);
