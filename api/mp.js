@@ -81,7 +81,12 @@ async function subscribe(req, res) {
         transaction_amount: cfg.amount,
         currency_id: 'MXN',
       },
-      back_url: SITE + '/app.html?sub=ok',
+      // El regreso tras autorizar en Mercado Pago va a la vista de pago de
+      // la app (dmd.dmdmx.dev), no a crear.dmdmx.dev: pago.js lee ?sub= y
+      // muestra la confirmación. La preapproval de MP solo admite una
+      // back_url, así que no hay URLs distintas para éxito o cancelación.
+      // notification_url sigue en crear.dmdmx.dev (webhook del servidor).
+      back_url: 'https://dmd.dmdmx.dev/pago.html?sub=ok',
       notification_url: SITE + '/api/mp/webhook',
       status: 'pending',
     });
